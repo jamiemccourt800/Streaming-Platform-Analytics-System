@@ -1,93 +1,91 @@
-# Dsa Project Shauna+Jamie
+# Streaming Platform Analytics System
 
+**DKIT - Algorithms & Data Structures Project**  
+*Analyzing user interaction data using Java data structures*
 
+## Overview
 
-## Getting started
+A Java-based analytics system that processes user interaction data from a streaming platform (like Netflix or Spotify). The system demonstrates efficient use of core data structures (HashMap, HashSet, TreeMap, ArrayList) to analyze user behavior, detect duplicates, and perform time-based queries across 100+ interaction records.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Features
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- **CSV Data Loading**: Parses interaction data from multiple dataset files
+- **Duplicate Detection**: Identifies duplicate records across datasets using HashSet
+- **User Analytics**: Fast filtering and statistics by UserID using HashMap
+- **Action Analysis**: Groups interactions by type (PLAY, PAUSE, LIKE, SKIP, STOP)
+- **Time-Range Queries**: Efficient timestamp-based searches using TreeMap
+- **User Statistics**: Calculates interaction counts, timespans, and activity patterns
 
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Project Structure
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.comp.dkit.ie/D00243983/dsa-project-shauna-jamie.git
-git branch -M main
-git push -uf origin main
+dsa-project-shauna-jamie/
+├── data/
+│   ├── Dataset_1.txt          # First dataset (50 interactions)
+│   └── Dataset_2.txt          # Second dataset (50 interactions)
+├── src/main/java/org/example/
+│   ├── model/
+│   │   └── Interaction.java   # Domain model for user interactions
+│   ├── util/
+│   │   └── DataLoader.java    # CSV parser and file loader
+│   └── service/
+│       └── (analytics engine - coming soon)
+└── pom.xml                     # Maven configuration
 ```
 
-## Integrate with your tools
+## Technologies & Data Structures
 
-- [ ] [Set up project integrations](https://gitlab.comp.dkit.ie/D00243983/dsa-project-shauna-jamie/-/settings/integrations)
+- **Language**: Java 24
+- **Build Tool**: Maven
+- **Data Structures Used**:
+  - `ArrayList` - Storing all interactions in order
+  - `HashMap` - Fast user/action type lookups
+  - `HashSet` - Duplicate detection
+  - `TreeMap` - Timestamp-based range queries
+  - `LocalDateTime` - Timestamp parsing and comparison
 
-## Collaborate with your team
+## Getting Started
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### Prerequisites
 
-## Test and Deploy
+- Java 8 or higher
+- Maven (optional - can compile with javac)
 
-Use the built-in continuous integration in GitLab.
+## Dataset Information
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+- **Total Records**: 100 (50 per dataset)
+- **Unique Records**: 97 (after duplicate removal)
+- **Users**: U001 - U012
+- **Action Types**: PLAY, PAUSE, STOP, LIKE, SKIP
+- **Time Range**: 2025-11-23, 08:01 - 11:19
+- **Known Duplicates**: 3 records
+  - I016 (Dataset_1) = I053 (Dataset_2)
+  - I025 (Dataset_1) = I055 (Dataset_2)
+  - I043 (Dataset_1) = I081 (Dataset_2)
 
-***
+## Key Implementation Details
 
-# Editing this README
+### Interaction Model
+Each interaction represents a user action with streaming content:
+- InteractionID, SessionID, UserID
+- Timestamp (LocalDateTime)
+- ActionType (PLAY, PAUSE, etc.)
+- ContentID, Duration
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### Duplicate Detection Logic
+Two interactions are considered duplicates if ALL fields match EXCEPT InteractionID (since different datasets may use different IDs for the same event).
 
-## Suggestions for a good README
+## Expected Analytics Results
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+- **User with most interactions**: U005 (12 interactions, latest at 11:09)
+- **Longest activity timespan**: U002 (180 minutes: 08:03 to 11:03)
+- **Most diverse user** (action types): U002, U003, U005, U009 (5 unique actions)
 
-## Name
-Choose a self-explaining name for your project.
+## Authors
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+- **Jamie** - D00265301
+- **Shauna** - D00243983
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## Project Status
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+**In Development** - Core data structures and loading complete, analytics engine in progress
