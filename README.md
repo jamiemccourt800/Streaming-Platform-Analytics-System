@@ -38,11 +38,6 @@ dsa-project-shauna-jamie/
 - **Language**: Java 24
 - **Build Tool**: Maven
 - **Data Structures Used**:
-  - `ArrayList` - Storing all interactions in order
-  - `HashMap` - Fast user/action type lookups
-  - `HashSet` - Duplicate detection
-  - `TreeMap` - Timestamp-based range queries
-  - `LocalDateTime` - Timestamp parsing and comparison
 
 ## Getting Started
 
