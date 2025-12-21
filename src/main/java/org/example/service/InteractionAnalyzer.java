@@ -84,4 +84,115 @@ public class InteractionAnalyzer {
     public int getDuplicateCount(int originalCount) {
         return originalCount - uniqueInteractions.size();
     }
+    
+    // ==================== FILTERING METHODS ====================
+    
+    /**
+     * Gets all interactions for a specific user.
+     * Uses the userIndex HashMap for O(1) lookup speed.
+     * 
+     * @param userId The user ID to search for (e.g., "U001", "U005")
+     * @return List of interactions for this user, or empty list if user not found
+     */
+    public List<Interaction> getInteractionsByUser(String userId) {
+        if (userId == null || userId.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // HashMap lookup is O(1) - instant retrieval
+        List<Interaction> interactions = userIndex.get(userId.trim());
+        
+        // Return empty list if user not found, otherwise return copy to prevent modification
+        return interactions == null ? new ArrayList<>() : new ArrayList<>(interactions);
+    }
+    
+    /**
+     * Gets all interactions for a specific action type.
+     * Uses the actionIndex HashMap for O(1) lookup speed.
+     * 
+     * @param actionType The action type to search for (e.g., "play", "pause", "skip")
+     * @return List of interactions for this action type, or empty list if not found
+     */
+    public List<Interaction> getInteractionsByAction(String actionType) {
+        if (actionType == null || actionType.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // HashMap lookup is O(1) - instant retrieval
+        List<Interaction> interactions = actionIndex.get(actionType.trim());
+        
+        // Return empty list if action not found, otherwise return copy
+        return interactions == null ? new ArrayList<>() : new ArrayList<>(interactions);
+    }
+    
+    /**
+     * Gets all interactions within a specific time range (inclusive).
+     * Uses the TreeMap's subMap for efficient range queries - O(log n + k) where k is result size.
+     * 
+     * @param start Start of time range (inclusive)
+     * @param end End of time range (inclusive)
+     * @return List of interactions within the time range, sorted by timestamp
+     */
+    public List<Interaction> getInteractionsByTimeRange(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) {
+            return new ArrayList<>();
+        }
+        
+        if (start.isAfter(end)) {
+            // Swap if start is after end
+            LocalDateTime temp = start;
+            start = end;
+            end = temp;
+        }
+        
+        List<Interaction> results = new ArrayList<>();
+        
+        // subMap gets a portion of the TreeMap efficiently - O(log n) to find boundaries
+        Map<LocalDateTime, List<Interaction>> rangeMap = timeIndex.subMap(start, true, end, true);
+        
+        // Collect all interactions from the range
+        for (List<Interaction> interactions : rangeMap.values()) {
+            results.addAll(interactions);
+        }
+        
+        return results;
+    }
+    
+    // ==================== DISCOVERY METHODS ====================
+    
+    /**
+     * Gets all unique user IDs that appear in the dataset.
+     * 
+     * @return Set of all user IDs
+     */
+    public Set<String> getAllUsers() {
+        return Collections.unmodifiableSet(userIndex.keySet());
+    }
+    
+    /**
+     * Gets all unique action types that appear in the dataset.
+     * 
+     * @return Set of all action types
+     */
+    public Set<String> getAllActionTypes() {
+        return Collections.unmodifiableSet(actionIndex.keySet());
+    }
+    
+    /**
+     * Gets the earliest timestamp in the dataset.
+     * 
+     * @return Earliest timestamp, or null if no data
+     */
+    public LocalDateTime getEarliestTimestamp() {
+        return timeIndex.isEmpty() ? null : timeIndex.firstKey();
+    }
+    
+    /**
+     * Gets the latest timestamp in the dataset.
+     * 
+     * @return Latest timestamp, or null if no data
+     */
+    public LocalDateTime getLatestTimestamp() {
+        return timeIndex.isEmpty() ? null : timeIndex.lastKey();
+    }
 }
