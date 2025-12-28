@@ -195,4 +195,168 @@ public class InteractionAnalyzer {
     public LocalDateTime getLatestTimestamp() {
         return timeIndex.isEmpty() ? null : timeIndex.lastKey();
     }
+    
+    // ==================== ANALYTICS & STATISTICS METHODS ====================
+    
+    /**
+     * Calculates comprehensive statistics for a specific user.
+     * Returns a map containing:
+     * - "interactionCount": Total number of interactions
+     * - "timespan": Time difference between earliest and latest interaction (in hours)
+     * - "totalDuration": Sum of all interaction durations (in seconds)
+     * - "earliestInteraction": Timestamp of first interaction
+     * - "latestInteraction": Timestamp of last interaction
+     * 
+     * @param userId The user ID to analyze
+     * @return Map of statistics, or null if user not found
+     */
+    public Map<String, Object> getUserStatistics(String userId) {
+        List<Interaction> userInteractions = getInteractionsByUser(userId);
+        
+        if (userInteractions.isEmpty()) {
+            return null;
+        }
+        
+        Map<String, Object> stats = new HashMap<>();
+        
+        // Count interactions
+        stats.put("interactionCount", userInteractions.size());
+        
+        // Find earliest and latest timestamps
+        LocalDateTime earliest = userInteractions.get(0).getTimestamp();
+        LocalDateTime latest = userInteractions.get(0).getTimestamp();
+        long totalDuration = 0;
+        
+        for (Interaction interaction : userInteractions) {
+            LocalDateTime timestamp = interaction.getTimestamp();
+            if (timestamp.isBefore(earliest)) {
+                earliest = timestamp;
+            }
+            if (timestamp.isAfter(latest)) {
+                latest = timestamp;
+            }
+            totalDuration += interaction.getDurationSeconds();
+        }
+        
+        stats.put("earliestInteraction", earliest);
+        stats.put("latestInteraction", latest);
+        stats.put("totalDuration", totalDuration);
+        
+        // Calculate timespan in hours
+        long timespanHours = java.time.Duration.between(earliest, latest).toHours();
+        stats.put("timespan", timespanHours);
+        
+        return stats;
+    }
+    
+    /**
+     * Finds the user with the most interactions in the dataset.
+     * 
+     * @return User ID of the most active user, or null if no data
+     */
+    public String getMostActiveUser() {
+        if (userIndex.isEmpty()) {
+            return null;
+        }
+        
+        String mostActiveUser = null;
+        int maxInteractions = 0;
+        
+        // Iterate through all users and find the one with most interactions
+        for (Map.Entry<String, List<Interaction>> entry : userIndex.entrySet()) {
+            int count = entry.getValue().size();
+            if (count > maxInteractions) {
+                maxInteractions = count;
+                mostActiveUser = entry.getKey();
+            }
+        }
+        
+        return mostActiveUser;
+    }
+    
+    /**
+     * Counts how many unique action types a specific user has performed.
+     * For example, if a user has done "play", "pause", and "skip" actions,
+     * this returns 3 (even if they did "play" multiple times).
+     * 
+     * @param userId The user ID to analyze
+     * @return Number of unique action types, or 0 if user not found
+     */
+    public int countUniqueActions(String userId) {
+        List<Interaction> userInteractions = getInteractionsByUser(userId);
+        
+        if (userInteractions.isEmpty()) {
+            return 0;
+        }
+        
+        // Use a HashSet to track unique action types
+        Set<String> uniqueActions = new HashSet<>();
+        for (Interaction interaction : userInteractions) {
+            uniqueActions.add(interaction.getActionType());
+        }
+        
+        return uniqueActions.size();
+    }
+    
+    /**
+     * Gets the distribution of action types across all interactions.
+     * Returns a map where keys are action types and values are counts.
+     * Example: {"play": 45, "pause": 30, "skip": 15, "like": 7}
+     * 
+     * @return Map of action types to their counts
+     */
+    public Map<String, Integer> getActionDistribution() {
+        Map<String, Integer> distribution = new HashMap<>();
+        
+        for (Map.Entry<String, List<Interaction>> entry : actionIndex.entrySet()) {
+            distribution.put(entry.getKey(), entry.getValue().size());
+        }
+        
+        return distribution;
+    }
+    
+    /**
+     * Calculates the total duration (in seconds) of all interactions in the dataset.
+     * 
+     * @return Total duration in seconds
+     */
+    public long getTotalDuration() {
+        long total = 0;
+        
+        for (Interaction interaction : uniqueInteractions) {
+            total += interaction.getDurationSeconds();
+        }
+        
+        return total;
+    }
+    
+    /**
+     * Gets the average duration (in seconds) across all interactions.
+     * 
+     * @return Average duration in seconds, or 0 if no data
+     */
+    public double getAverageDuration() {
+        if (uniqueInteractions.isEmpty()) {
+            return 0.0;
+        }
+        
+        return (double) getTotalDuration() / uniqueInteractions.size();
+    }
+    
+    /**
+     * Finds all users who have performed a specific action type.
+     * 
+     * @param actionType The action type to search for
+     * @return Set of user IDs who performed this action
+     */
+    public Set<String> getUsersByAction(String actionType) {
+        List<Interaction> interactions = getInteractionsByAction(actionType);
+        
+        Set<String> users = new HashSet<>();
+        for (Interaction interaction : interactions) {
+            users.add(interaction.getUserId());
+        }
+        
+        return users;
+    }
 }
