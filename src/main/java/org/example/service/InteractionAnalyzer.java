@@ -10,7 +10,7 @@ import java.util.*;
  * Uses multiple data structures for efficient querying:
  * - HashSet: Removes duplicate interactions
  * - HashMap: Fast lookups by user and action type (O(1))
- * - TreeMap: Ordered access by timestamp for range queries (O(log n))
+ * TODO: Add TreeMap for efficient time-range queries
  */
 public class InteractionAnalyzer {
     
@@ -22,9 +22,6 @@ public class InteractionAnalyzer {
     
     // Index for fast action type lookups - maps actionType to matching interactions
     private final Map<String, List<Interaction>> actionIndex;
-    
-    // Ordered by timestamp for efficient time-range queries
-    private final TreeMap<LocalDateTime, List<Interaction>> timeIndex;
     
     /**
      * Creates an analyzer and builds all indexes from the provided interactions.
@@ -39,7 +36,6 @@ public class InteractionAnalyzer {
         // Step 2: Initialize the index maps
         this.userIndex = new HashMap<>();
         this.actionIndex = new HashMap<>();
-        this.timeIndex = new TreeMap<>(); // TreeMap keeps timestamps sorted
         
         // Step 3: Build all indexes by iterating through unique interactions
         for (Interaction interaction : uniqueInteractions) {
@@ -49,10 +45,6 @@ public class InteractionAnalyzer {
             
             // Add to action type index
             actionIndex.computeIfAbsent(interaction.getActionType(), k -> new ArrayList<>())
-                    .add(interaction);
-            
-            // Add to timestamp index
-            timeIndex.computeIfAbsent(interaction.getTimestamp(), k -> new ArrayList<>())
                     .add(interaction);
         }
     }
@@ -125,39 +117,6 @@ public class InteractionAnalyzer {
         return interactions == null ? new ArrayList<>() : new ArrayList<>(interactions);
     }
     
-    /**
-     * Gets all interactions within a specific time range (inclusive).
-     * Uses the TreeMap's subMap for efficient range queries - O(log n + k) where k is result size.
-     * 
-     * @param start Start of time range (inclusive)
-     * @param end End of time range (inclusive)
-     * @return List of interactions within the time range, sorted by timestamp
-     */
-    public List<Interaction> getInteractionsByTimeRange(LocalDateTime start, LocalDateTime end) {
-        if (start == null || end == null) {
-            return new ArrayList<>();
-        }
-        
-        if (start.isAfter(end)) {
-            // Swap if start is after end
-            LocalDateTime temp = start;
-            start = end;
-            end = temp;
-        }
-        
-        List<Interaction> results = new ArrayList<>();
-        
-        // subMap gets a portion of the TreeMap efficiently - O(log n) to find boundaries
-        Map<LocalDateTime, List<Interaction>> rangeMap = timeIndex.subMap(start, true, end, true);
-        
-        // Collect all interactions from the range
-        for (List<Interaction> interactions : rangeMap.values()) {
-            results.addAll(interactions);
-        }
-        
-        return results;
-    }
-    
     // ==================== DISCOVERY METHODS ====================
     
     /**
@@ -178,23 +137,10 @@ public class InteractionAnalyzer {
         return Collections.unmodifiableSet(actionIndex.keySet());
     }
     
-    /**
-     * Gets the earliest timestamp in the dataset.
-     * 
-     * @return Earliest timestamp, or null if no data
-     */
-    public LocalDateTime getEarliestTimestamp() {
-        return timeIndex.isEmpty() ? null : timeIndex.firstKey();
-    }
-    
-    /**
-     * Gets the latest timestamp in the dataset.
-     * 
-     * @return Latest timestamp, or null if no data
-     */
-    public LocalDateTime getLatestTimestamp() {
-        return timeIndex.isEmpty() ? null : timeIndex.lastKey();
-    }
+    // TODO: Add TreeMap-based time-range query methods:
+    // - getInteractionsByTimeRange(LocalDateTime start, LocalDateTime end)
+    // - getEarliestTimestamp()
+    // - getLatestTimestamp()
     
     // ==================== ANALYTICS & STATISTICS METHODS ====================
     
