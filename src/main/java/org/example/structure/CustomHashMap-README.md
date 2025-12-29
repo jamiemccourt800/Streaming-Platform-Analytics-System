@@ -1,7 +1,7 @@
 # CustomHashMap Implementation
 
 **Author:** Jamie McCourt (D00265301)  
-**Module:** Algorithms & Data Structures 
+**Module:** Algorithms & Data Structures  
 **Date:** December 2025
 
 ---
@@ -155,6 +155,8 @@ CustomHashMap<String, Integer> map = new CustomHashMap<>(32); // Custom capacity
 
 ---
 
+## Implementation Details
+
 ### Bucket Structure
 
 ```java
@@ -167,22 +169,6 @@ private ArrayList<Entry<K, V>>[] buckets;
 
 ### Rehashing Process
 
-```java
-private void rehash() {
-    ArrayList<Entry<K, V>>[] oldBuckets = buckets;
-    buckets = (ArrayList<Entry<K, V>>[]) new ArrayList[oldBuckets.length * 2];
-    size = 0;
-    
-    for (ArrayList<Entry<K, V>> bucket : oldBuckets) {
-        if (bucket != null) {
-            for (Entry<K, V> entry : bucket) {
-                put(entry.key, entry.value); // Re-insert
-            }
-        }
-    }
-}
-```
-
 **Amortized Cost:** Although rehashing is O(n), it happens infrequently (every doubling), resulting in O(1) amortized cost per insertion.
 
 ---
@@ -190,23 +176,6 @@ private void rehash() {
 ## Integration with InteractionAnalyzer
 
 ### Current Usage
-
-```java
-public class InteractionAnalyzer {
-    private final CustomHashMap<String, List<Interaction>> userIndex;
-    private final CustomHashMap<String, List<Interaction>> actionIndex;
-    
-    public InteractionAnalyzer(List<Interaction> interactions) {
-        this.userIndex = new CustomHashMap<>();
-        this.actionIndex = new CustomHashMap<>();
-        
-        for (Interaction interaction : uniqueInteractions) {
-            userIndex.computeIfAbsent(interaction.getUserId(), new ArrayList<>())
-                    .add(interaction);
-        }
-    }
-}
-```
 
 ### Performance Impact
 
