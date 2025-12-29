@@ -137,10 +137,94 @@ public class InteractionAnalyzer {
         return Collections.unmodifiableSet(actionIndex.keySet());
     }
     
-    // TODO: Add TreeMap-based time-range query methods:
-    // - getInteractionsByTimeRange(LocalDateTime start, LocalDateTime end)
-    // - getEarliestTimestamp()
-    // - getLatestTimestamp()
+    /**
+     * Get all interactions in a time range.
+     * This helps find what happened between two times.
+     * 
+     * @param start Start time
+     * @param end End time
+     * @return List of interactions in that time period
+     */
+    public List<Interaction> getInteractionsByTimeRange(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) {
+            return new ArrayList<>();
+        }
+        
+        if (start.isAfter(end)) {
+            throw new IllegalArgumentException("Start time must be before end time");
+        }
+        
+        // Make a tree map to store interactions by time
+        org.example.datastructures.CustomTreeMap<LocalDateTime, List<Interaction>> timeMap = 
+            new org.example.datastructures.CustomTreeMap<>();
+        
+        // Put all interactions into the time map
+        for (Interaction interaction : uniqueInteractions) {
+            LocalDateTime time = interaction.getTimestamp();
+            
+            List<Interaction> list = timeMap.get(time);
+            if (list == null) {
+                list = new ArrayList<>();
+                timeMap.put(time, list);
+            }
+            list.add(interaction);
+        }
+        
+        // Get just the ones in our time range
+        org.example.datastructures.CustomTreeMap<LocalDateTime, List<Interaction>> rangeMap = 
+            timeMap.subMap(start, end);
+        
+        // Put them all in one list
+        List<Interaction> results = new ArrayList<>();
+        for (LocalDateTime time : rangeMap.keySet()) {
+            List<Interaction> list = rangeMap.get(time);
+            if (list != null) {
+                results.addAll(list);
+            }
+        }
+        
+        return results;
+    }
+    
+    /**
+     * Find the earliest time in the data.
+     * 
+     * @return The first timestamp
+     */
+    public LocalDateTime getEarliestTimestamp() {
+        if (uniqueInteractions.isEmpty()) {
+            return null;
+        }
+        
+        LocalDateTime earliest = null;
+        for (Interaction interaction : uniqueInteractions) {
+            LocalDateTime time = interaction.getTimestamp();
+            if (earliest == null || time.isBefore(earliest)) {
+                earliest = time;
+            }
+        }
+        return earliest;
+    }
+    
+    /**
+     * Find the latest time in the data.
+     * 
+     * @return The last timestamp
+     */
+    public LocalDateTime getLatestTimestamp() {
+        if (uniqueInteractions.isEmpty()) {
+            return null;
+        }
+        
+        LocalDateTime latest = null;
+        for (Interaction interaction : uniqueInteractions) {
+            LocalDateTime time = interaction.getTimestamp();
+            if (latest == null || time.isAfter(latest)) {
+                latest = time;
+            }
+        }
+        return latest;
+    }
     
     // ==================== ANALYTICS & STATISTICS METHODS ====================
     
@@ -304,5 +388,101 @@ public class InteractionAnalyzer {
         }
         
         return users;
+    }
+    
+    /**
+     * Find which user watched for the longest time.
+     * Longest time = first interaction to last interaction for each user.
+     * 
+     * @return The user ID with longest span
+     */
+    public String getUserWithLongestViewingSpan() {
+        if (userIndex.isEmpty()) {
+            return null;
+        }
+        
+        String winnerUser = null;
+        long longestMinutes = -1;
+        String mostRecentId = null;
+        
+        // Check each user
+        for (Map.Entry<String, List<Interaction>> entry : userIndex.entrySet()) {
+            String userId = entry.getKey();
+            List<Interaction> userInteractions = entry.getValue();
+            
+            if (userInteractions.isEmpty()) {
+                continue;
+            }
+            
+            // Find first and last time for this user
+            LocalDateTime firstTime = userInteractions.get(0).getTimestamp();
+            LocalDateTime lastTime = userInteractions.get(0).getTimestamp();
+            String userRecentId = userInteractions.get(0).getInteractionId();
+            
+            for (Interaction interaction : userInteractions) {
+                LocalDateTime time = interaction.getTimestamp();
+                String id = interaction.getInteractionId();
+                
+                if (time.isBefore(firstTime)) {
+                    firstTime = time;
+                }
+                if (time.isAfter(lastTime)) {
+                    lastTime = time;
+                    userRecentId = id;
+                } else if (time.equals(lastTime)) {
+                    // Same time? Pick the bigger ID
+                    if (id.compareTo(userRecentId) > 0) {
+                        userRecentId = id;
+                    }
+                }
+            }
+            
+            // Calculate minutes between first and last
+            long minutes = java.time.Duration.between(firstTime, lastTime).toMinutes();
+            
+            // Is this user better than our current winner?
+            if (minutes > longestMinutes) {
+                longestMinutes = minutes;
+                winnerUser = userId;
+                mostRecentId = userRecentId;
+            } else if (minutes == longestMinutes) {
+                // Tie! Pick user with more recent ID
+                if (userRecentId.compareTo(mostRecentId) > 0) {
+                    winnerUser = userId;
+                    mostRecentId = userRecentId;
+                }
+            }
+        }
+        
+        return winnerUser;
+    }
+    
+    /**
+     * Get the viewing span for one user in minutes.
+     * 
+     * @param userId The user to check
+     * @return Minutes from first to last interaction
+     */
+    public long getUserViewingSpan(String userId) {
+        List<Interaction> userInteractions = getInteractionsByUser(userId);
+        
+        if (userInteractions.size() < 2) {
+            return 0;
+        }
+        
+        LocalDateTime firstTime = userInteractions.get(0).getTimestamp();
+        LocalDateTime lastTime = userInteractions.get(0).getTimestamp();
+        
+        for (Interaction interaction : userInteractions) {
+            LocalDateTime time = interaction.getTimestamp();
+            if (time.isBefore(firstTime)) {
+                firstTime = time;
+            }
+            if (time.isAfter(lastTime)) {
+                lastTime = time;
+            }
+        }
+        
+        return java.time.Duration.between(firstTime, lastTime).toMinutes();
     }
 }

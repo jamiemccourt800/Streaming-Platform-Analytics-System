@@ -1,0 +1,174 @@
+package org.example;
+
+import org.example.model.Interaction;
+import org.example.service.InteractionAnalyzer;
+import org.example.util.DataLoader;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+/**
+ * Main program for the Streaming Platform project.
+ * This runs all the different analysis operations.
+ * 
+ * @author Shauna
+ */
+public class Main {
+    
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    
+    public static void main(String[] args) {
+        System.out.println("========================================");
+        System.out.println("  STREAMING PLATFORM ANALYTICS");
+        System.out.println("  DSA Project");
+        System.out.println("========================================\n");
+        
+        try {
+            // Load the data files
+            System.out.println("========================================");
+            System.out.println("  LOADING DATA");
+            System.out.println("========================================\n");
+            
+            List<Interaction> dataset1 = DataLoader.loadFromFile("data/Dataset_1.txt");
+            List<Interaction> dataset2 = DataLoader.loadFromFile("data/Dataset_2.txt");
+            
+            System.out.println("\nData loaded!\n");
+            
+            // Part 1: Analyze the first dataset
+            System.out.println("========================================");
+            System.out.println("  PART 1: SINGLE DATASET ANALYSIS");
+            System.out.println("========================================\n");
+            
+            InteractionAnalyzer analyzer1 = new InteractionAnalyzer(dataset1);
+            
+            // Operation 1.2: Show newest to oldest
+            System.out.println("----------------------------------------");
+            System.out.println("1.2: Reverse Chronological Order");
+            System.out.println("----------------------------------------");
+            System.out.println("NOTE: Jamie will do this part");
+            System.out.println("Should show: I050, I049, I048... I002, I001\n");
+            
+            // Operation 1.3: Most diverse user
+            System.out.println("----------------------------------------");
+            System.out.println("1.3: User with Most Different Actions");
+            System.out.println("----------------------------------------");
+            System.out.println("NOTE: Jamie will do this part");
+            System.out.println("Should show: U002\n");
+            
+            // Operation 1.4: Filter by user
+            System.out.println("----------------------------------------");
+            System.out.println("1.4: Filter by User (U004)");
+            System.out.println("----------------------------------------");
+            List<Interaction> userInteractions = analyzer1.getInteractionsByUser("U004");
+            System.out.println("Found " + userInteractions.size() + " interactions for U004:");
+            for (Interaction i : userInteractions) {
+                System.out.printf("%s\t%s\t%s\t%s\t%s\t%d\n",
+                    i.getInteractionId(), i.getSessionId(), 
+                    i.getTimestamp().format(FORMATTER),
+                    i.getActionType(), i.getContentId(), i.getDurationSeconds());
+            }
+            System.out.println();
+            
+            // Part 1.5: Filter by Action Type
+            System.out.println("----------------------------------------");
+            System.out.println("1.5: Filter by Action (SKIP)");
+            System.out.println("----------------------------------------");
+            List<Interaction> skipInteractions = analyzer1.getInteractionsByAction("SKIP");
+            for (Interaction i : skipInteractions) {
+                System.out.printf("%s\t%s\t%s\t%s\t%d\n",
+                    i.getInteractionId(), i.getUserId(), 
+                    i.getTimestamp().format(FORMATTER),
+                    i.getContentId(), i.getDurationSeconds());
+            }
+            System.out.println();
+            
+            // Part 1.6: Timestamp Range Query (Shauna's implementation)
+            System.out.println("----------------------------------------");
+            System.out.println("1.6: Time Range Query (08:30-09:00)");
+            System.out.println("----------------------------------------");
+            LocalDateTime rangeStart = LocalDateTime.of(2025, 11, 23, 8, 30);
+            LocalDateTime rangeEnd = LocalDateTime.of(2025, 11, 23, 9, 0);
+            List<Interaction> rangeResults = analyzer1.getInteractionsByTimeRange(rangeStart, rangeEnd);
+            System.out.println("Found " + rangeResults.size() + " interactions in range:");
+            for (Interaction i : rangeResults) {
+                System.out.printf("%s\t%s\t%s\t%s\t%s\t%d\n",
+                    i.getInteractionId(), i.getUserId(), 
+                    i.getTimestamp().format(FORMATTER),
+                    i.getActionType(), i.getContentId(), i.getDurationSeconds());
+            }
+            System.out.println();
+            
+            // Operation 1.7: Longest span (MY IMPLEMENTATION)
+            System.out.println("----------------------------------------");
+            System.out.println("1.7: Longest Viewing Span");
+            System.out.println("----------------------------------------");
+            
+            // Need both datasets for complete data
+            List<Interaction> allData = new java.util.ArrayList<>();
+            allData.addAll(dataset1);
+            allData.addAll(dataset2);
+            InteractionAnalyzer allAnalyzer = new InteractionAnalyzer(allData);
+            
+            String longestUser = allAnalyzer.getUserWithLongestViewingSpan();
+            long minutes = allAnalyzer.getUserViewingSpan(longestUser);
+            
+            System.out.println("User: " + longestUser);
+            System.out.println("Span: " + minutes + " minutes");
+            
+            System.out.println("\nAll users:");
+            java.util.Set<String> users = allAnalyzer.getAllUsers();
+            java.util.List<String> sortedUsers = new java.util.ArrayList<>(users);
+            java.util.Collections.sort(sortedUsers);
+            
+            for (String user : sortedUsers) {
+                long span = allAnalyzer.getUserViewingSpan(user);
+                System.out.println(user + ": " + span + " minutes");
+            }
+            System.out.println();
+            
+            // Part 2
+            System.out.println("========================================");
+            System.out.println("  PART 2: MULTI-DATASET ANALYSIS");
+            System.out.println("========================================\n");
+            
+            // Operation 2.2: Remove duplicates
+            System.out.println("----------------------------------------");
+            System.out.println("2.2: Remove Duplicates");
+            System.out.println("----------------------------------------");
+            System.out.println("NOTE: Jamie will do this part");
+            System.out.println("Should find 97 unique interactions\n");
+            
+            // Operation 2.3: Most interactions
+            System.out.println("----------------------------------------");
+            System.out.println("2.3: User with Most Interactions");
+            System.out.println("----------------------------------------");
+            System.out.println("NOTE: Jamie will do this part");
+            System.out.println("Should show: U005\n");
+            
+            // Done!
+            System.out.println("========================================");
+            System.out.println("  DONE!");
+            System.out.println("========================================\n");
+            
+            System.out.println("My work (Shauna):");
+            System.out.println("  - CustomTreeMap");
+            System.out.println("  - Time Range Query");
+            System.out.println("  - Longest Viewing Span");
+            System.out.println();
+            System.out.println("Jamie's work:");
+            System.out.println("  - CustomHashMap");
+            System.out.println("  - CustomHashSet");
+            System.out.println("  - Reverse Chronological");
+            System.out.println("  - Most Diverse User");
+            System.out.println("  - Remove Duplicates");
+            System.out.println("  - Most Interactions");
+            System.out.println();
+            System.out.println("========================================\n");
+            
+        } catch (Exception e) {
+            System.err.println("\n✗ ERROR: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
