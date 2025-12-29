@@ -153,6 +153,35 @@ public class CustomHashSet<E> implements Iterable<E> {
         map.clear();
     }
     
-    // TODO: Implement iterator() for Iterable interface
-    // TODO: Add toString() for debugging
+    /**
+     * Returns an iterator over the elements in this set.
+     * The elements are returned in no particular order (due to hash-based storage).
+     * 
+     * This implementation returns an iterator over the keys of the underlying HashMap.
+     * The iterator supports traversal but does not support the remove() operation.
+     * 
+     * @return An iterator over the elements in this set
+     * 
+     * Time Complexity: O(1) to create iterator, O(n) to iterate all elements
+     * Space Complexity: O(1) for iterator itself
+     */
+    @Override
+    public Iterator<E> iterator() {
+        return map.keySet().iterator();
+    }
+    
+    /**
+     * Returns a string representation of this set.
+     * The string representation consists of a list of the set's elements
+     * in the order they are returned by its iterator, enclosed in square brackets ("[]").
+     * Adjacent elements are separated by ", " (comma and space).
+     * 
+     * This method is useful for debugging and logging purposes.
+     * 
+     * @return A string representation of this set
+     */
+    @Override
+    public String toString() {
+        return map.keySet().toString();
+    }
 }
