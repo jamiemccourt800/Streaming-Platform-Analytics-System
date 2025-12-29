@@ -58,7 +58,27 @@ public class CustomHashSet<E> implements Iterable<E> {
         this.map = new CustomHashMap<>(initialCapacity);
     }
     
-    // TODO: Implement core methods (add, remove, contains, size, isEmpty, clear)
+    /**
+     * Adds the specified element to this set if it is not already present.
+     * If this set already contains the element, the call leaves the set
+     * unchanged and returns false.
+     * 
+     * This operation leverages the underlying CustomHashMap's put() method,
+     * which provides O(1) average-case performance.
+     * 
+     * @param element The element to be added to this set
+     * @return true if the set did not already contain the specified element,
+     *         false if the element was already present
+     * 
+     * Time Complexity: O(1) average case, O(n) worst case (all elements collide)
+     * Space Complexity: O(1) per element
+     */
+    public boolean add(E element) {
+        Object previous = map.put(element, PRESENT);
+        return previous == null; // true if element was new, false if already existed
+    }
+    
+    // TODO: Implement remove, contains, size, isEmpty, clear methods
     // TODO: Implement iterator() for Iterable interface
     // TODO: Add toString() for debugging
 }
