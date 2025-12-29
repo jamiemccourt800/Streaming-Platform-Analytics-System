@@ -98,7 +98,25 @@ public class CustomHashSet<E> implements Iterable<E> {
         return previous != null; // true if element existed and was removed
     }
     
-    // TODO: Implement contains, size, isEmpty, clear methods
+    /**
+     * Returns true if this set contains the specified element.
+     * More formally, returns true if and only if this set contains an
+     * element e such that Objects.equals(element, e).
+     * 
+     * This operation leverages the underlying CustomHashMap's containsKey() method,
+     * which provides O(1) average-case performance.
+     * 
+     * @param element The element whose presence in this set is to be tested
+     * @return true if this set contains the specified element, false otherwise
+     * 
+     * Time Complexity: O(1) average case, O(n) worst case (must search through chain)
+     * Space Complexity: O(1) - no additional space required
+     */
+    public boolean contains(E element) {
+        return map.containsKey(element);
+    }
+    
+    // TODO: Implement size, isEmpty, clear methods
     // TODO: Implement iterator() for Iterable interface
     // TODO: Add toString() for debugging
 }
