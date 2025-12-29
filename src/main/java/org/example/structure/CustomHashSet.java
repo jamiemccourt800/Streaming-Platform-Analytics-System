@@ -78,7 +78,27 @@ public class CustomHashSet<E> implements Iterable<E> {
         return previous == null; // true if element was new, false if already existed
     }
     
-    // TODO: Implement remove, contains, size, isEmpty, clear methods
+    /**
+     * Removes the specified element from this set if it is present.
+     * If this set does not contain the element, the call leaves the set
+     * unchanged and returns false.
+     * 
+     * This operation leverages the underlying CustomHashMap's remove() method,
+     * which provides O(1) average-case performance.
+     * 
+     * @param element The element to be removed from this set, if present
+     * @return true if the set contained the specified element and it was removed,
+     *         false if the element was not present
+     * 
+     * Time Complexity: O(1) average case, O(n) worst case (must search through chain)
+     * Space Complexity: O(1) - no additional space required
+     */
+    public boolean remove(E element) {
+        Object previous = map.remove(element);
+        return previous != null; // true if element existed and was removed
+    }
+    
+    // TODO: Implement contains, size, isEmpty, clear methods
     // TODO: Implement iterator() for Iterable interface
     // TODO: Add toString() for debugging
 }
