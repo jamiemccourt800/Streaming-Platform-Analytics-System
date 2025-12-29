@@ -1,6 +1,7 @@
 package org.example.service;
 
 import org.example.model.Interaction;
+import org.example.structure.CustomHashSet;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -8,14 +9,14 @@ import java.util.*;
 /**
  * Analytics engine for analyzing user interactions from streaming platform data.
  * Uses multiple data structures for efficient querying:
- * - HashSet: Removes duplicate interactions
+ * - CustomHashSet: Removes duplicate interactions (custom implementation)
  * - HashMap: Fast lookups by user and action type (O(1))
  * TODO: Add TreeMap for efficient time-range queries
  */
 public class InteractionAnalyzer {
     
-    // Core storage - HashSet automatically removes duplicates
-    private final Set<Interaction> uniqueInteractions;
+    // Core storage - CustomHashSet automatically removes duplicates
+    private final CustomHashSet<Interaction> uniqueInteractions;
     
     // Index for fast user lookups - maps userId to their interactions
     private final Map<String, List<Interaction>> userIndex;
@@ -30,8 +31,13 @@ public class InteractionAnalyzer {
      * @param interactions List of interactions to analyze (may contain duplicates)
      */
     public InteractionAnalyzer(List<Interaction> interactions) {
-        // Step 1: Remove duplicates using HashSet
-        this.uniqueInteractions = new HashSet<>(interactions);
+        // Step 1: Remove duplicates using CustomHashSet
+        // Use Math.max to ensure capacity is at least 16 (avoids IllegalArgumentException for empty lists)
+        int initialCapacity = Math.max(16, interactions.size());
+        this.uniqueInteractions = new CustomHashSet<>(initialCapacity);
+        for (Interaction interaction : interactions) {
+            uniqueInteractions.add(interaction);
+        }
         
         // Step 2: Initialize the index maps
         this.userIndex = new HashMap<>();
@@ -49,6 +55,41 @@ public class InteractionAnalyzer {
         }
     }
     
+    // ==================== DEDUPLICATION METHOD ====================
+    
+    /**
+     * Deduplicates interactions from two datasets using CustomHashSet.
+     * Two interactions are duplicates if all fields match except InteractionID.
+     * 
+     * @param dataset1 First list of interactions
+     * @param dataset2 Second list of interactions
+     * @return List of unique interactions with duplicates removed
+     */
+    public static List<Interaction> deduplicateDatasets(List<Interaction> dataset1, List<Interaction> dataset2) {
+        // Create CustomHashSet with appropriate capacity
+        int initialCapacity = Math.max(16, dataset1.size() + dataset2.size());
+        CustomHashSet<Interaction> uniqueSet = new CustomHashSet<>(initialCapacity);
+        
+        // Add all interactions from both datasets
+        // CustomHashSet automatically removes duplicates during add()
+        for (Interaction interaction : dataset1) {
+            uniqueSet.add(interaction);
+        }
+        for (Interaction interaction : dataset2) {
+            uniqueSet.add(interaction);
+        }
+        
+        // Convert CustomHashSet to List for return
+        List<Interaction> result = new ArrayList<>();
+        for (Interaction interaction : uniqueSet) {
+            result.add(interaction);
+        }
+        
+        return result;
+    }
+    
+    // ==================== ACCESSOR METHODS ====================
+    
     /**
      * Gets the total count of unique interactions (after removing duplicates).
      * 
@@ -59,12 +100,13 @@ public class InteractionAnalyzer {
     }
     
     /**
-     * Gets all unique interactions as an unmodifiable set.
+     * Gets all unique interactions.
+     * Returns the internal CustomHashSet for iteration and checking.
      * 
-     * @return Set of all unique interactions
+     * @return CustomHashSet of all unique interactions
      */
-    public Set<Interaction> getUniqueInteractions() {
-        return Collections.unmodifiableSet(uniqueInteractions);
+    public CustomHashSet<Interaction> getUniqueInteractions() {
+        return uniqueInteractions;
     }
     
     /**
