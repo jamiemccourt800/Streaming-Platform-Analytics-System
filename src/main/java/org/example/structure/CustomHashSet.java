@@ -116,7 +116,43 @@ public class CustomHashSet<E> implements Iterable<E> {
         return map.containsKey(element);
     }
     
-    // TODO: Implement size, isEmpty, clear methods
+    /**
+     * Returns the number of elements in this set (its cardinality).
+     * 
+     * @return The number of elements in this set
+     * 
+     * Time Complexity: O(1) - size is maintained by the underlying HashMap
+     * Space Complexity: O(1)
+     */
+    public int size() {
+        return map.size();
+    }
+    
+    /**
+     * Returns true if this set contains no elements.
+     * 
+     * @return true if this set contains no elements, false otherwise
+     * 
+     * Time Complexity: O(1)
+     * Space Complexity: O(1)
+     */
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+    
+    /**
+     * Removes all of the elements from this set.
+     * The set will be empty after this call returns.
+     * 
+     * This operation resets the underlying HashMap to its default capacity.
+     * 
+     * Time Complexity: O(1) - HashMap.clear() resets to default state
+     * Space Complexity: O(1)
+     */
+    public void clear() {
+        map.clear();
+    }
+    
     // TODO: Implement iterator() for Iterable interface
     // TODO: Add toString() for debugging
 }
