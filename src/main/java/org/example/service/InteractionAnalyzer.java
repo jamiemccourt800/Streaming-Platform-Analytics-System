@@ -431,6 +431,67 @@ public class InteractionAnalyzer {
     }
     
     /**
+     * Gets the timestamp of the earliest interaction for a specific user.
+     * Used for tie-breaking when multiple users have the same diversity count
+     * (same number of unique action types) in DSA-5: Most Diverse User.
+     * 
+     * Tie-Breaking Strategy:
+     * When multiple users have identical diversity (e.g., all have 5 unique actions),
+     * the user who demonstrated that diverse behavior FIRST (earliest timestamp) wins.
+     * This rewards early adopters and users who showed varied engagement from the start.
+     * 
+     * Rationale for Earliest vs Latest:
+     * - Most interactions (DSA-9): Latest timestamp wins (shows sustained recent activity)
+     * - Most diverse actions (DSA-5): Earliest timestamp wins (shows early diverse behavior)
+     * 
+     * The distinction makes sense because:
+     * - Activity volume benefits from recency (current engagement matters)
+     * - Behavior diversity benefits from earliness (pioneering varied usage patterns)
+     * 
+     * Example Use Case (Dataset_1):
+     * Tied users with 5 unique actions:
+     * - U002: earliest at 08:03 (I002) ← WINS tie-breaker
+     * - U003: earliest at 08:07 (I004)
+     * - U005: earliest at 08:17 (I009)
+     * - U009: earliest at 08:37 (I019)
+     * 
+     * Result: U002 wins because 08:03 < 08:07 < 08:17 < 08:37
+     * 
+     * Implementation:
+     * Iterates through user's interactions to find the minimum (earliest) timestamp
+     * using LocalDateTime.isBefore() comparison. Mirrors getUserMostRecentTimestamp()
+     * but searches for minimum instead of maximum.
+     * 
+     * @param userId The user ID to check (e.g., "U001", "U002")
+     * @return The earliest timestamp for this user, or null if user not found
+     * 
+     * Time Complexity: O(m) where m = number of interactions for this user
+     * Space Complexity: O(1) - only stores single LocalDateTime reference
+     * 
+     * @see #getUserWithMostDiverseActions() - Main method using this tie-breaker
+     * @see #getUserActionTypeCounts() - Aggregation method identifying tied users
+     * @see #getUserMostRecentTimestamp(String) - Opposite tie-breaker (latest wins)
+     */
+    public LocalDateTime getUserEarliestTimestamp(String userId) {
+        List<Interaction> userInteractions = getInteractionsByUser(userId);
+        
+        if (userInteractions.isEmpty()) {
+            return null;
+        }
+        
+        LocalDateTime earliest = userInteractions.get(0).getTimestamp();
+        
+        for (Interaction interaction : userInteractions) {
+            LocalDateTime timestamp = interaction.getTimestamp();
+            if (timestamp.isBefore(earliest)) {
+                earliest = timestamp;
+            }
+        }
+        
+        return earliest;
+    }
+    
+    /**
      * Finds the user with the most interactions across deduplicated datasets.
      * Handles ties by selecting the user with the most recent interaction timestamp.
      * 
