@@ -598,6 +598,72 @@ public class InteractionAnalyzer {
     }
     
     /**
+     * Aggregates diversity counts (unique action types) for all users in the dataset.
+     * Returns a map where each key is a userId and the value is the count of 
+     * unique action types that user has performed.
+     * 
+     * This method is the aggregation step for identifying the "most diverse" user
+     * in DSA-5 (User with Most Different Actions). It provides a complete overview
+     * of action diversity across all users, enabling quick identification of users
+     * with the highest variety of interactions.
+     * 
+     * Implementation Strategy:
+     * Iterates through the userIndex HashMap and calls countUniqueActions() for
+     * each user. This leverages the existing helper method to avoid code duplication
+     * and maintain consistency in diversity calculation logic.
+     * 
+     * Example Output (Dataset_1):
+     * {
+     *   U001=4, U002=5, U003=4, U004=3, U005=4, U006=2, U007=2,
+     *   U008=2, U009=4, U010=3, U011=2, U012=2
+     * }
+     * 
+     * In this example:
+     * - U002 has highest diversity (5 unique actions: PLAY, SKIP, PAUSE, LIKE, STOP)
+     * - U001, U003, U005, U009 all have 4 unique actions (tied for second)
+     * - U004, U010 have 3 unique actions
+     * - U006-U008, U011-U012 have 2 unique actions (least diverse)
+     * 
+     * Use Cases:
+     * - Finding user with most diverse behavior (primary use for DSA-5)
+     * - Identifying tie scenarios for diversity-based queries
+     * - Analyzing user engagement patterns (diversity correlates with engagement)
+     * - Generating user behavior reports and statistics
+     * 
+     * Tie-Breaking Context:
+     * When multiple users share the maximum diversity count, getUserEarliestTimestamp()
+     * is used to break ties. The user with the earliest interaction wins, as they
+     * demonstrated diverse behavior first.
+     * 
+     * Single Dataset Scope:
+     * Per project requirements: "All operations should be carried out only on the 
+     * data in the original log file." This method operates on a single analyzer 
+     * instance (typically Dataset_1.txt for Operation 1.3).
+     * 
+     * @return Map of userId to diversity count (unique action types), 
+     *         or empty map if no users exist
+     * 
+     * Time Complexity: O(n × m) where n = number of users, m = avg interactions per user
+     *                  For 12 users with ~4-7 interactions each: ~60 operations
+     * Space Complexity: O(n) for storing diversity counts map (12 entries for our dataset)
+     * 
+     * @see #countUniqueActions(String) - Helper method calculating per-user diversity
+     * @see #getUserWithMostDiverseActions() - Main method using this aggregation
+     * @see #getUserEarliestTimestamp(String) - Tie-breaker for diversity ties
+     */
+    public Map<String, Integer> getUserActionTypeCounts() {
+        Map<String, Integer> diversityCounts = new HashMap<>();
+        
+        // Iterate through all users and calculate their diversity
+        for (String userId : userIndex.keySet()) {
+            int diversityCount = countUniqueActions(userId);
+            diversityCounts.put(userId, diversityCount);
+        }
+        
+        return diversityCounts;
+    }
+    
+    /**
      * Gets the distribution of action types across all interactions.
      * Returns a map where keys are action types and values are counts.
      * Example: {"play": 45, "pause": 30, "skip": 15, "like": 7}
