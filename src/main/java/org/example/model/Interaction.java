@@ -2,6 +2,7 @@ package org.example.model;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Objects;
 
 /**
@@ -151,5 +152,16 @@ public class Interaction {
      */
     public String getUniqueKey() {
         return sessionId + "_" + userId + "_" + timestamp.format(TIMESTAMP_FORMATTER);
+    }
+    
+    // ==================== COMPARATORS ====================
+    
+    /**
+     * Returns a Comparator for sorting interactions from newest to oldest.
+     * 
+     * @return Comparator that sorts by timestamp in descending order
+     */
+    public static Comparator<Interaction> reverseChronologicalOrder() {
+        return Comparator.comparing(Interaction::getTimestamp).reversed();
     }
 }

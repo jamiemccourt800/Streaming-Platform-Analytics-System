@@ -110,6 +110,25 @@ public class InteractionAnalyzer {
     }
     
     /**
+     * Gets all interactions sorted from newest to oldest (reverse chronological).
+     * Converts the unordered CustomHashSet to a sorted List.
+     * 
+     * @return List of interactions sorted by timestamp in descending order
+     */
+    public List<Interaction> getInteractionsReverseChronological() {
+        // Convert CustomHashSet to List
+        List<Interaction> interactions = new ArrayList<>();
+        for (Interaction interaction : uniqueInteractions) {
+            interactions.add(interaction);
+        }
+        
+        // Sort using the Interaction's built-in comparator (newest to oldest)
+        Collections.sort(interactions, Interaction.reverseChronologicalOrder());
+        
+        return interactions;
+    }
+    
+    /**
      * Gets the count of duplicates that were removed.
      * 
      * @param originalCount The original count before removing duplicates
