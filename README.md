@@ -78,6 +78,15 @@ The system provides timestamp-based sorting to display interactions from newest 
 - **Method**: `InteractionAnalyzer.getInteractionsReverseChronological()` converts unordered CustomHashSet to sorted List
 - **Performance**: O(n log n) sorting with Collections.sort(), efficient for expected dataset sizes
 
+### User with Most Interactions (Multi-Dataset)
+The system identifies the most active user across deduplicated datasets with intelligent tie-breaking:
+- **Main Method**: `getUserWithMostInteractionsAcrossDatasets()` - finds user with highest interaction count
+- **Aggregation**: `getUserInteractionCounts()` - returns Map of all userId → count pairs
+- **Tie-Breaker**: `getUserMostRecentTimestamp(userId)` - finds user's latest interaction timestamp
+- **Tie-Breaking Strategy**: When multiple users have equal counts, user with most recent timestamp wins
+- **Expected Result**: U005 (12 interactions, timestamp 11:09) defeats U001-U004 (also 12, but earlier timestamps)
+- **Performance**: O(n + m) where n = users, m = interactions for tied users
+
 ```
 
 ## Expected Analytics Results

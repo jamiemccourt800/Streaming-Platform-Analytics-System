@@ -397,6 +397,117 @@ public class InteractionAnalyzer {
     }
     
     /**
+     * Gets the timestamp of the most recent interaction for a specific user.
+     * Used for tie-breaking when multiple users have the same interaction count.
+     * 
+     * The user with the most recent (latest) timestamp is considered more active
+     * in tie-breaking scenarios.
+     * 
+     * Example use case:
+     * - U001 has 12 interactions, most recent at 11:01
+     * - U005 has 12 interactions, most recent at 11:09
+     * - U005 wins the tie-breaker (11:09 > 11:01)
+     * 
+     * @param userId The user ID to check
+     * @return The most recent timestamp for this user, or null if user not found
+     */
+    public LocalDateTime getUserMostRecentTimestamp(String userId) {
+        List<Interaction> userInteractions = getInteractionsByUser(userId);
+        
+        if (userInteractions.isEmpty()) {
+            return null;
+        }
+        
+        LocalDateTime mostRecent = userInteractions.get(0).getTimestamp();
+        
+        for (Interaction interaction : userInteractions) {
+            LocalDateTime timestamp = interaction.getTimestamp();
+            if (timestamp.isAfter(mostRecent)) {
+                mostRecent = timestamp;
+            }
+        }
+        
+        return mostRecent;
+    }
+    
+    /**
+     * Finds the user with the most interactions across deduplicated datasets.
+     * Handles ties by selecting the user with the most recent interaction timestamp.
+     * 
+     * Algorithm:
+     * 1. Aggregate interaction counts for all users (via getUserInteractionCounts())
+     * 2. Find the maximum interaction count
+     * 3. Collect all users with that maximum count
+     * 4. If only one user has max count, return that user immediately
+     * 5. If multiple users tied, compare their most recent timestamps
+     * 6. Return the user with the latest (most recent) timestamp
+     * 
+     * Tie-Breaking Example:
+     * After deduplication of Dataset_1 + Dataset_2:
+     * - U001: 12 interactions, most recent at 2025-11-23 11:01
+     * - U002: 12 interactions, most recent at 2025-11-23 11:03
+     * - U003: 12 interactions, most recent at 2025-11-23 11:05
+     * - U004: 12 interactions, most recent at 2025-11-23 11:07
+     * - U005: 12 interactions, most recent at 2025-11-23 11:09 ← WINNER
+     * 
+     * Result: U005 (12 interactions, wins tie-breaker with timestamp 11:09)
+     * 
+     * Complexity:
+     * - Time: O(n + m) where n = number of users, m = interactions for tied users
+     * - Space: O(n) for storing user counts and tied users list
+     * 
+     * @return User ID with most interactions (tie-broken by most recent timestamp), 
+     *         or null if no data
+     */
+    public String getUserWithMostInteractionsAcrossDatasets() {
+        if (userIndex.isEmpty()) {
+            return null;
+        }
+        
+        // Step 1: Get all user interaction counts
+        Map<String, Integer> counts = getUserInteractionCounts();
+        
+        // Step 2: Find the maximum interaction count
+        int maxCount = 0;
+        for (int count : counts.values()) {
+            if (count > maxCount) {
+                maxCount = count;
+            }
+        }
+        
+        // Step 3: Collect all users with the maximum count (potential ties)
+        List<String> tiedUsers = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            if (entry.getValue() == maxCount) {
+                tiedUsers.add(entry.getKey());
+            }
+        }
+        
+        // Step 4: If only one user has max count, return immediately
+        if (tiedUsers.size() == 1) {
+            return tiedUsers.get(0);
+        }
+        
+        // Step 5: Multiple users tied - apply timestamp tie-breaker
+        String winnerUser = tiedUsers.get(0);
+        LocalDateTime winnerTimestamp = getUserMostRecentTimestamp(winnerUser);
+        
+        for (int i = 1; i < tiedUsers.size(); i++) {
+            String currentUser = tiedUsers.get(i);
+            LocalDateTime currentTimestamp = getUserMostRecentTimestamp(currentUser);
+            
+            // User with more recent timestamp wins
+            if (currentTimestamp != null && 
+                (winnerTimestamp == null || currentTimestamp.isAfter(winnerTimestamp))) {
+                winnerUser = currentUser;
+                winnerTimestamp = currentTimestamp;
+            }
+        }
+        
+        return winnerUser;
+    }
+    
+    /**
      * Finds the user with the most interactions in the dataset.
      * 
      * @return User ID of the most active user, or null if no data
