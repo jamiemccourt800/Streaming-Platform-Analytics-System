@@ -12,22 +12,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Utility class for loading interaction data from CSV files.
- * This is like having a robot that reads your CSV files and 
- * turns each line into an Interaction object.
+ * Loads interaction data from CSV files.
+ * Reads the file and converts each line into an Interaction object.
+ * 
+ * @author Shauna Mc Guinness
  */
 public class DataLoader {
     
     /**
      * Loads interactions from a CSV file.
+     * Skips the header line and reads each line into an Interaction object.
      * 
-     * Think of it like this:
-     * 1. Open the file
-     * 2. Skip the header line (InteractionID,SessionID,UserID,...)
-     * 3. Read each data line and turn it into an Interaction
-     * 4. Return a list of all interactions
-     * 
-     * @param filePath Path to the CSV file (e.g., "Dataset_1.txt")
+     * @param filePath Path to the CSV file (e.g., "data/Dataset_1.txt")
      * @return List of Interaction objects
      * @throws IOException if file can't be read
      */

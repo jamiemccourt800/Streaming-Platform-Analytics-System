@@ -7,11 +7,13 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * Analytics engine for analyzing user interactions from streaming platform data.
- * Uses multiple data structures for efficient querying:
- * - CustomHashSet: Removes duplicate interactions (custom implementation)
- * - HashMap: Fast lookups by user and action type (O(1))
- * TODO: Add TreeMap for efficient time-range queries
+ * Service class for analyzing user interactions.
+ * Uses multiple data structures for different queries:
+ * - CustomHashSet: Removes duplicate interactions
+ * - HashMap: Fast lookups by user or action type
+ * - CustomTreeMap: For time range queries
+ * 
+ * @author Shauna Mc Guinness
  */
 public class InteractionAnalyzer {
     
@@ -25,10 +27,10 @@ public class InteractionAnalyzer {
     private final Map<String, List<Interaction>> actionIndex;
     
     /**
-     * Creates an analyzer and builds all indexes from the provided interactions.
-     * This constructor does the heavy lifting of organizing data for fast queries.
+     * Creates an analyzer and builds indexes.
+     * Removes duplicates and organizes data for fast lookups.
      * 
-     * @param interactions List of interactions to analyze (may contain duplicates)
+     * @param interactions List of interactions (may have duplicates)
      */
     public InteractionAnalyzer(List<Interaction> interactions) {
         // Step 1: Remove duplicates using CustomHashSet
@@ -142,17 +144,17 @@ public class InteractionAnalyzer {
     
     /**
      * Gets all interactions for a specific user.
-     * Uses the userIndex HashMap for O(1) lookup speed.
+     * Uses HashMap for O(1) lookup.
      * 
      * @param userId The user ID to search for (e.g., "U001", "U005")
-     * @return List of interactions for this user, or empty list if user not found
+     * @return List of interactions for this user
      */
     public List<Interaction> getInteractionsByUser(String userId) {
         if (userId == null || userId.trim().isEmpty()) {
             return new ArrayList<>();
         }
         
-        // HashMap lookup is O(1) - instant retrieval
+        // Look up user in the HashMap
         List<Interaction> interactions = userIndex.get(userId.trim());
         
         // Return empty list if user not found, otherwise return copy to prevent modification
@@ -161,17 +163,17 @@ public class InteractionAnalyzer {
     
     /**
      * Gets all interactions for a specific action type.
-     * Uses the actionIndex HashMap for O(1) lookup speed.
+     * Uses HashMap for O(1) lookup.
      * 
      * @param actionType The action type to search for (e.g., "play", "pause", "skip")
-     * @return List of interactions for this action type, or empty list if not found
+     * @return List of interactions for this action type
      */
     public List<Interaction> getInteractionsByAction(String actionType) {
         if (actionType == null || actionType.trim().isEmpty()) {
             return new ArrayList<>();
         }
         
-        // HashMap lookup is O(1) - instant retrieval
+        // Look up action in the HashMap
         List<Interaction> interactions = actionIndex.get(actionType.trim());
         
         // Return empty list if action not found, otherwise return copy
@@ -199,12 +201,13 @@ public class InteractionAnalyzer {
     }
     
     /**
-     * Get all interactions in a time range.
-     * This helps find what happened between two times.
+     * Gets interactions within a specific time range.
+     * Uses CustomTreeMap to find interactions between start and end times.
+     * Time Complexity: O(log n + k) where k = number of results.
      * 
      * @param start Start time
      * @param end End time
-     * @return List of interactions in that time period
+     * @return List of interactions in the time range
      */
     public List<Interaction> getInteractionsByTimeRange(LocalDateTime start, LocalDateTime end) {
         if (start == null || end == null) {
@@ -452,10 +455,12 @@ public class InteractionAnalyzer {
     }
     
     /**
-     * Find which user watched for the longest time.
-     * Longest time = first interaction to last interaction for each user.
+     * Finds the user with the longest viewing span.
+     * Viewing span = time from first interaction to last interaction.
+     * If there's a tie, picks the user with the larger ID.
+     * Time Complexity: O(n) where n = total interactions.
      * 
-     * @return The user ID with longest span
+     * @return User ID with longest span
      */
     public String getUserWithLongestViewingSpan() {
         if (userIndex.isEmpty()) {
@@ -519,10 +524,12 @@ public class InteractionAnalyzer {
     }
     
     /**
-     * Get the viewing span for one user in minutes.
+     * Calculates the viewing span for one user in minutes.
+     * Span = time from user's first interaction to last interaction.
+     * Time Complexity: O(m) where m = interactions for this user.
      * 
-     * @param userId The user to check
-     * @return Minutes from first to last interaction
+     * @param userId User to check
+     * @return Viewing span in minutes
      */
     public long getUserViewingSpan(String userId) {
         List<Interaction> userInteractions = getInteractionsByUser(userId);

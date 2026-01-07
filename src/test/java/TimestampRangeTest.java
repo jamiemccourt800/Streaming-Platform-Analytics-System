@@ -7,8 +7,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * Test for DSA-6: Timestamp Range Query
- * Tests the getInteractionsByTimeRange() method
+ * Test for DSA-6: Timestamp Range Query.
+ * Tests getting interactions within a specific time range.
+ * Should return 15 interactions for the 08:30-09:00 range.
+ * 
+ * @author Shauna Mc Guinness
  */
 public class TimestampRangeTest {
     
