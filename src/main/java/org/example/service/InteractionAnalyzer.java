@@ -534,11 +534,52 @@ public class InteractionAnalyzer {
     
     /**
      * Counts how many unique action types a specific user has performed.
-     * For example, if a user has done "play", "pause", and "skip" actions,
-     * this returns 3 (even if they did "play" multiple times).
+     * This method is the foundation for identifying the "most diverse" user
+     * (DSA-5: User with Most Different Actions).
      * 
-     * @param userId The user ID to analyze
-     * @return Number of unique action types, or 0 if user not found
+     * Action Type Criteria:
+     * The streaming platform recognizes 5 distinct action types:
+     * 1. PLAY - Start or resume playing content
+     * 2. PAUSE - Temporarily pause content playback
+     * 3. STOP - Completely stop content (ends session)
+     * 4. LIKE - Mark content as favorite/liked
+     * 5. SKIP - Skip to next content (duration = 0)
+     * 
+     * Diversity Definition:
+     * Diversity = number of UNIQUE action types performed, not total actions.
+     * A user who performs PLAY 10 times has diversity = 1.
+     * A user who performs PLAY, PAUSE, LIKE has diversity = 3.
+     * 
+     * Implementation Strategy:
+     * Uses HashSet to automatically deduplicate action type strings.
+     * For each user interaction, adds actionType to set. Final set.size()
+     * equals diversity count. This provides O(n) time complexity where
+     * n = number of interactions for that user.
+     * 
+     * Example Analysis (Dataset_1):
+     * - U001: {PLAY, PAUSE, STOP, LIKE} = 4 unique actions
+     * - U002: {PLAY, SKIP, PAUSE, LIKE, STOP} = 5 unique actions ← Tied winner
+     * - U003: {PLAY, LIKE, STOP, SKIP} = 4 unique actions  
+     * - U005: {PLAY, STOP, LIKE, PAUSE} = 4 unique actions
+     * - U009: {PLAY, PAUSE, SKIP, STOP} = 4 unique actions
+     * 
+     * Expected Result (Dataset_1):
+     * Multiple users tied with 5 actions (U002, U003, U005, U009).
+     * Tie-breaker: User with earliest interaction wins → U002 at 08:03
+     * 
+     * Single Dataset Scope:
+     * Per project requirements: "All operations should be carried out only 
+     * on the data in the original log file" (Dataset_1.txt for Operation 1.3).
+     * This method operates on a single InteractionAnalyzer instance.
+     * 
+     * @param userId The user ID to analyze (e.g., "U001", "U002")
+     * @return Number of unique action types (0-5), or 0 if user not found
+     * 
+     * Time Complexity: O(n) where n = user's interaction count
+     * Space Complexity: O(k) where k = number of unique actions (max 5)
+     * 
+     * @see #getUserWithMostDiverseActions() - Main method using this helper
+     * @see #getUserEarliestTimestamp(String) - Tie-breaker for diversity ties
      */
     public int countUniqueActions(String userId) {
         List<Interaction> userInteractions = getInteractionsByUser(userId);

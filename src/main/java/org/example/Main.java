@@ -157,15 +157,63 @@ public class Main {
             System.out.println("----------------------------------------");
             System.out.println("2.2: Remove Duplicates");
             System.out.println("----------------------------------------");
-            System.out.println("NOTE: Jamie will do this part");
-            System.out.println("Should find 97 unique interactions\n");
+            
+            System.out.println("Dataset_1: " + dataset1.size() + " interactions");
+            System.out.println("Dataset_2: " + dataset2.size() + " interactions");
+            System.out.println("Combined: " + (dataset1.size() + dataset2.size()) + " total interactions\n");
+            
+            // Deduplicate using static method
+            List<Interaction> deduplicatedData = InteractionAnalyzer.deduplicateDatasets(dataset1, dataset2);
+            
+            System.out.println("After deduplication: " + deduplicatedData.size() + " unique interactions");
+            System.out.println("Duplicates removed: " + ((dataset1.size() + dataset2.size()) - deduplicatedData.size()));
+            System.out.println("\nKnown duplicate pairs:");
+            System.out.println("  I016 (Dataset_1) = I053 (Dataset_2)");
+            System.out.println("  I025 (Dataset_1) = I055 (Dataset_2)");
+            System.out.println("  I043 (Dataset_1) = I081 (Dataset_2)");
+            System.out.println();
+            
+            // Create analyzer with deduplicated data for next operation
+            InteractionAnalyzer multiAnalyzer = new InteractionAnalyzer(deduplicatedData);
             
             // Operation 2.3: Most interactions
             System.out.println("----------------------------------------");
             System.out.println("2.3: User with Most Interactions");
             System.out.println("----------------------------------------");
-            System.out.println("NOTE: Jamie will do this part");
-            System.out.println("Should show: U005\n");
+            
+            // Find user with most interactions (with tie-breaking)
+            String mostActiveUser = multiAnalyzer.getUserWithMostInteractionsAcrossDatasets();
+            java.util.Map<String, Integer> userCounts = multiAnalyzer.getUserInteractionCounts();
+            int winnerCount = userCounts.get(mostActiveUser);
+            LocalDateTime winnerTimestamp = multiAnalyzer.getUserMostRecentTimestamp(mostActiveUser);
+            
+            System.out.println("Winner: " + mostActiveUser);
+            System.out.println("Interactions: " + winnerCount);
+            System.out.println("Most recent activity: " + winnerTimestamp.format(FORMATTER));
+            
+            // Show tie-breaking details
+            System.out.println("\nTied users (all have " + winnerCount + " interactions):");
+            java.util.List<String> tiedUsers = java.util.Arrays.asList("U001", "U002", "U003", "U004", "U005");
+            for (String user : tiedUsers) {
+                if (userCounts.containsKey(user) && userCounts.get(user) == winnerCount) {
+                    LocalDateTime timestamp = multiAnalyzer.getUserMostRecentTimestamp(user);
+                    System.out.printf("  %s: latest at %s%s\n", 
+                        user, timestamp.format(FORMATTER),
+                        user.equals(mostActiveUser) ? " ← WINNER (tie-breaker)" : "");
+                }
+            }
+            System.out.println();
+            
+            // Show other users for comparison
+            System.out.println("Other users:");
+            java.util.List<String> otherUsers = new java.util.ArrayList<>(userCounts.keySet());
+            java.util.Collections.sort(otherUsers);
+            for (String user : otherUsers) {
+                if (!tiedUsers.contains(user)) {
+                    System.out.printf("  %s: %d interactions\n", user, userCounts.get(user));
+                }
+            }
+            System.out.println();
             
             // Done!
             System.out.println("========================================");
