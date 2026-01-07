@@ -11,6 +11,7 @@ A Java-based analytics system that processes user interaction data from a stream
 
 - **CSV Data Loading**: Parses interaction data from multiple dataset files
 - **Duplicate Detection**: Identifies duplicate records across datasets using HashSet
+- **Reverse Chronological Display**: Sort interactions from newest to oldest using custom Comparator
 - **User Analytics**: Fast filtering and statistics by UserID using HashMap
 - **Action Analysis**: Groups interactions by type (PLAY, PAUSE, LIKE, SKIP, STOP)
 - **Time-Range Queries**: Efficient timestamp-based searches using TreeMap
@@ -69,6 +70,15 @@ Each interaction represents a user action with streaming content:
 
 ### Duplicate Detection Logic
 Two interactions are considered duplicates if ALL fields match EXCEPT InteractionID (since different datasets may use different IDs for the same event).
+
+### Reverse Chronological Sorting
+The system provides timestamp-based sorting to display interactions from newest to oldest:
+- **Static Comparator Pattern**: `Interaction.reverseChronologicalOrder()` returns a reusable Comparator
+- **Implementation**: Uses `Comparator.comparing(Interaction::getTimestamp).reversed()`
+- **Method**: `InteractionAnalyzer.getInteractionsReverseChronological()` converts unordered CustomHashSet to sorted List
+- **Performance**: O(n log n) sorting with Collections.sort(), efficient for expected dataset sizes
+
+```
 
 ## Expected Analytics Results
 

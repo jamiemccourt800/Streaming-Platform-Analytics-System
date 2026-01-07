@@ -46,8 +46,29 @@ public class Main {
             System.out.println("----------------------------------------");
             System.out.println("1.2: Reverse Chronological Order");
             System.out.println("----------------------------------------");
-            System.out.println("NOTE: Jamie will do this part");
-            System.out.println("Should show: I050, I049, I048... I002, I001\n");
+            List<Interaction> reverseChronoInteractions = analyzer1.getInteractionsReverseChronological();
+            System.out.println("Showing " + reverseChronoInteractions.size() + " interactions (newest to oldest):");
+            System.out.println("\nFirst 10 (newest):");
+            for (int i = 0; i < Math.min(10, reverseChronoInteractions.size()); i++) {
+                Interaction inter = reverseChronoInteractions.get(i);
+                System.out.printf("%s\t%s\t%s\t%s\t%s\t%d\n",
+                    inter.getInteractionId(), inter.getUserId(),
+                    inter.getTimestamp().format(FORMATTER),
+                    inter.getActionType(), inter.getContentId(), 
+                    inter.getDurationSeconds());
+            }
+            System.out.println("...");
+            System.out.println("Last 3 (oldest):");
+            int size = reverseChronoInteractions.size();
+            for (int i = Math.max(0, size - 3); i < size; i++) {
+                Interaction inter = reverseChronoInteractions.get(i);
+                System.out.printf("%s\t%s\t%s\t%s\t%s\t%d\n",
+                    inter.getInteractionId(), inter.getUserId(),
+                    inter.getTimestamp().format(FORMATTER),
+                    inter.getActionType(), inter.getContentId(), 
+                    inter.getDurationSeconds());
+            }
+            System.out.println();
             
             // Operation 1.3: Most diverse user
             System.out.println("----------------------------------------");
