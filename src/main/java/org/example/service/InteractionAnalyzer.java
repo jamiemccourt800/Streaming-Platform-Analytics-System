@@ -59,11 +59,41 @@ public class InteractionAnalyzer {
     
     /**
      * Deduplicates interactions from two datasets using CustomHashSet.
-     * Two interactions are duplicates if all fields match except InteractionID.
      * 
-     * @param dataset1 First list of interactions
-     * @param dataset2 Second list of interactions
-     * @return List of unique interactions with duplicates removed
+     * Deduplication Criteria:
+     * Two interactions are considered duplicates if ALL fields match EXCEPT InteractionID:
+     * 
+     * SessionID must match
+     * UserID must match
+     * Timestamp must match (exact LocalDateTime)
+     * ActionType must match (PLAY, PAUSE, etc.)
+     * ContentID must match
+     * DurationSeconds must match
+     *
+     * 
+     * Why InteractionID is excluded:
+     * Different datasets assign different IDs to the same real-world event. For example:
+     * 
+     * I016 (Dataset_1) = I053 (Dataset_2) - same interaction, different labels
+     * I025 (Dataset_1) = I055 (Dataset_2) - same interaction, different labels
+     * I043 (Dataset_1) = I081 (Dataset_2) - same interaction, different labels
+     * 
+     * 
+     * Implementation:
+     * Uses {@link org.example.structure.CustomHashSet} which leverages 
+     * {@link org.example.model.Interaction#equals(Object)} and 
+     * {@link org.example.model.Interaction#hashCode()} for O(1) duplicate detection.
+     * The Interaction.equals() method explicitly excludes InteractionID from comparison.
+     * 
+     * Expected Results:
+     * Dataset_1 (50 interactions) + Dataset_2 (50 interactions) = 97 unique interactions
+     * (3 duplicates removed: I053, I055, I081)
+     * 
+     * @param dataset1 First list of interactions (e.g., Dataset_1.txt)
+     * @param dataset2 Second list of interactions (e.g., Dataset_2.txt)
+     * @return List of unique interactions with duplicates removed (97 for provided datasets)
+     * @see org.example.model.Interaction#equals(Object)
+     * @see org.example.model.Interaction#hashCode()
      */
     public static List<Interaction> deduplicateDatasets(List<Interaction> dataset1, List<Interaction> dataset2) {
         // Create CustomHashSet with appropriate capacity
@@ -338,6 +368,32 @@ public class InteractionAnalyzer {
         stats.put("timespan", timespanHours);
         
         return stats;
+    }
+    
+    /**
+     * Aggregates interaction counts for all users in the dataset.
+     * Returns a map where each key is a userId and the value is the count
+     * of unique interactions for that user (after deduplication).
+     * 
+     * This method is used for identifying the most active users and
+     * handling tie-breaking scenarios in multi-dataset analysis.
+     * 
+     * Example output for deduplicated datasets:
+     * {U001=12, U002=12, U003=12, U004=12, U005=12, U006=10, U007=10, ...}
+     * 
+     * @return Map of userId to interaction count, or empty map if no data
+     */
+    public Map<String, Integer> getUserInteractionCounts() {
+        Map<String, Integer> counts = new HashMap<>();
+        
+        // Iterate through userIndex and extract sizes
+        for (Map.Entry<String, List<Interaction>> entry : userIndex.entrySet()) {
+            String userId = entry.getKey();
+            int count = entry.getValue().size();
+            counts.put(userId, count);
+        }
+        
+        return counts;
     }
     
     /**
