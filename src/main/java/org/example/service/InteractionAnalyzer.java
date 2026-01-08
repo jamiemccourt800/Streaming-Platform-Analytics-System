@@ -725,6 +725,97 @@ public class InteractionAnalyzer {
     }
     
     /**
+     * Finds the user with the most diverse actions (highest number of unique action types).
+     * Handles ties by selecting the user with the earliest interaction timestamp.
+     * 
+     * This is the main method for DSA-5: User with Most Different Actions (Operation 1.3).
+     * It identifies which user has performed the greatest variety of interaction types,
+     * demonstrating the most versatile engagement with the streaming platform.
+     * 
+     * Algorithm (6-Step Process):
+     * 1. Aggregate diversity counts for all users via getUserActionTypeCounts()
+     * 2. Find the maximum diversity count across all users
+     * 3. Collect all users who have that maximum diversity count (handle ties)
+     * 4. If only one user has max diversity, return immediately (no tie-breaking needed)
+     * 5. If multiple users tied, compare their earliest timestamps
+     * 6. Return the user with the earliest interaction (pioneered diverse behavior first)
+     * 
+     * Tie-Breaking Example (Dataset_1):
+     * After analyzing Dataset_1.txt:
+     * - U002: 5 unique actions (PLAY, SKIP, PAUSE, LIKE, STOP), earliest at 08:03 ← WINNER
+     * - U003: 5 unique actions (PLAY, LIKE, STOP, SKIP, PAUSE), earliest at 08:07
+     * - U005: 5 unique actions (PLAY, STOP, LIKE, PAUSE), earliest at 08:17
+     * - U009: 5 unique actions (PLAY, PAUSE, SKIP, STOP), earliest at 08:37
+     * 
+     * Result: U002 wins (5 unique actions, earliest timestamp 08:03)
+     * 
+     * Expected Results by Dataset:
+     * - Dataset_1 (Operation 1.3): U002 (5 actions, 08:03)
+     * - Combined datasets would need multi-dataset analysis (not in scope per brief)
+     * 
+     * Complexity Analysis:
+     * - Step 1 (Aggregation): O(n × m) where n = users, m = avg interactions per user
+     * - Step 2 (Find max): O(n) iterate through diversity counts
+     * - Step 3 (Collect ties): O(n) iterate through counts again
+     * - Step 4 (Early return): O(1) if no tie
+     * - Step 5 (Timestamps): O(k × m) where k = tied users, m = avg interactions
+     * - Total: O(n × m + k × m) ≈ O(n × m) since k ≤ n
+     * - For Dataset_1: 12 users × ~4-7 interactions = ~60 operations
+     * 
+     * @return User ID with most unique action types (tie-broken by earliest timestamp),
+     *         or null if no users exist in dataset
+     * 
+     */
+    public String getUserWithMostDiverseActions() {
+        if (userIndex.isEmpty()) {
+            return null;
+        }
+        
+        // Step 1: Get diversity counts for all users
+        Map<String, Integer> diversityCounts = getUserActionTypeCounts();
+        
+        // Step 2: Find the maximum diversity count
+        int maxDiversity = 0;
+        for (int diversityCount : diversityCounts.values()) {
+            if (diversityCount > maxDiversity) {
+                maxDiversity = diversityCount;
+            }
+        }
+        
+        // Step 3: Collect all users with the maximum diversity (potential ties)
+        List<String> tiedUsers = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : diversityCounts.entrySet()) {
+            if (entry.getValue() == maxDiversity) {
+                tiedUsers.add(entry.getKey());
+            }
+        }
+        
+        // Step 4: If only one user has max diversity, return immediately
+        if (tiedUsers.size() == 1) {
+            return tiedUsers.get(0);
+        }
+        
+        // Step 5: Multiple users tied - apply earliest timestamp tie-breaker
+        String winnerUser = tiedUsers.get(0);
+        LocalDateTime winnerTimestamp = getUserEarliestTimestamp(winnerUser);
+        
+        for (int i = 1; i < tiedUsers.size(); i++) {
+            String currentUser = tiedUsers.get(i);
+            LocalDateTime currentTimestamp = getUserEarliestTimestamp(currentUser);
+            
+            // User with earlier timestamp wins (pioneered diverse behavior first)
+            if (currentTimestamp != null && 
+                (winnerTimestamp == null || currentTimestamp.isBefore(winnerTimestamp))) {
+                winnerUser = currentUser;
+                winnerTimestamp = currentTimestamp;
+            }
+        }
+        
+        // Step 6: Return the winner
+        return winnerUser;
+    }
+    
+    /**
      * Gets the distribution of action types across all interactions.
      * Returns a map where keys are action types and values are counts.
      * Example: {"play": 45, "pause": 30, "skip": 15, "like": 7}
