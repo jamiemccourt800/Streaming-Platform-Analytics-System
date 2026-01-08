@@ -214,19 +214,58 @@ public class Main {
             System.out.println("  PART 2: MULTI-DATASET ANALYSIS");
             System.out.println("========================================\n");
             
-            // Operation 2.2: Remove duplicates
+            // ==========================================
+            // OPERATION 2.2: Remove Duplicates (JAMIE'S IMPLEMENTATION)
+            // ==========================================
             System.out.println("----------------------------------------");
-            System.out.println("2.2: Remove Duplicates");
+            System.out.println("2.2: Deduplicate Datasets");
             System.out.println("----------------------------------------");
-            System.out.println("NOTE: Jamie will do this part");
-            System.out.println("Should find 97 unique interactions\n");
             
-            // Operation 2.3: Most interactions
+            // Combine and deduplicate using static method
+            List<Interaction> dedupedData = InteractionAnalyzer.deduplicateDatasets(dataset1, dataset2);
+            System.out.println("Dataset 1 records: " + dataset1.size());
+            System.out.println("Dataset 2 records: " + dataset2.size());
+            System.out.println("Total records: " + (dataset1.size() + dataset2.size()));
+            System.out.println("Unique records after deduplication: " + dedupedData.size());
+            System.out.println("Duplicates removed: " + ((dataset1.size() + dataset2.size()) - dedupedData.size()));
+            System.out.println();
+            
+            // Create analyzer with deduplicated data for Part 2 operations
+            InteractionAnalyzer dedupedAnalyzer = new InteractionAnalyzer(dedupedData);
+            
+            // ==========================================
+            // OPERATION 2.3: User with Most Interactions (JAMIE'S IMPLEMENTATION)
+            // ==========================================
             System.out.println("----------------------------------------");
-            System.out.println("2.3: User with Most Interactions");
+            System.out.println("2.3: User with Most Interactions (After Deduplication)");
             System.out.println("----------------------------------------");
-            System.out.println("NOTE: Jamie will do this part");
-            System.out.println("Should show: U005\n");
+            
+            String mostActiveUser = dedupedAnalyzer.getMostActiveUser();
+            int maxCount = dedupedAnalyzer.getInteractionsByUser(mostActiveUser).size();
+            
+            System.out.println("Winner: " + mostActiveUser);
+            System.out.println("Total interactions: " + maxCount);
+            
+            // Show all user interaction counts
+            System.out.println("\nAll users sorted by interaction count:");
+            java.util.Map<String, Integer> userCounts = new java.util.HashMap<>();
+            for (String user : dedupedAnalyzer.getAllUsers()) {
+                userCounts.put(user, dedupedAnalyzer.getInteractionsByUser(user).size());
+            }
+            
+            // Sort by count descending, then by most recent interaction
+            java.util.List<String> sortedByCount = new java.util.ArrayList<>(dedupedAnalyzer.getAllUsers());
+            sortedByCount.sort((u1, u2) -> {
+                int countCompare = userCounts.get(u2).compareTo(userCounts.get(u1));
+                if (countCompare != 0) return countCompare;
+                // Tie: compare by most recent interaction
+                return u2.compareTo(u1); // Alphabetically for now
+            });
+            
+            for (String user : sortedByCount) {
+                System.out.println(user + ": " + userCounts.get(user) + " interactions");
+            }
+            System.out.println();
             
             // ==========================================
             // SUMMARY: Project Contributions
