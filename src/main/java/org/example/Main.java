@@ -7,6 +7,7 @@ import org.example.util.DataLoader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Main application for Streaming Platform Analytics.
@@ -219,19 +220,66 @@ public class Main {
             System.out.println("  PART 2: MULTI-DATASET ANALYSIS");
             System.out.println("========================================\n");
             
-            // Operation 2.2: Remove duplicates
+            // ==========================================
+            // OPERATION 2.2: Remove Duplicates
+            // ==========================================
             System.out.println("----------------------------------------");
             System.out.println("2.2: Remove Duplicates");
             System.out.println("----------------------------------------");
-            System.out.println("NOTE: Jamie will do this part");
-            System.out.println("Should find 97 unique interactions\n");
             
-            // Operation 2.3: Most interactions
+            // Deduplicate datasets - remove interactions from dataset2 that appear in dataset1
+            List<Interaction> deduplicatedData = InteractionAnalyzer.deduplicateDatasets(dataset1, dataset2);
+            
+            System.out.println("Dataset 1: " + dataset1.size() + " interactions");
+            System.out.println("Dataset 2: " + dataset2.size() + " interactions");
+            System.out.println("Total: " + (dataset1.size() + dataset2.size()) + " interactions");
+            System.out.println("After deduplication: " + deduplicatedData.size() + " unique interactions");
+            System.out.println("Duplicates removed: " + (dataset1.size() + dataset2.size() - deduplicatedData.size()));
+            System.out.println();
+            
+            // ==========================================
+            // OPERATION 2.3: User with Most Interactions (Multi-Dataset)
+            // ==========================================
             System.out.println("----------------------------------------");
             System.out.println("2.3: User with Most Interactions");
             System.out.println("----------------------------------------");
-            System.out.println("NOTE: Jamie will do this part");
-            System.out.println("Should show: U005\n");
+            
+            // Create analyzer with deduplicated data
+            InteractionAnalyzer multiDatasetAnalyzer = new InteractionAnalyzer(deduplicatedData);
+            
+            String mostActiveUser = multiDatasetAnalyzer.getUserWithMostInteractionsAcrossDatasets();
+            Map<String, Integer> interactionCounts = multiDatasetAnalyzer.getUserInteractionCounts();
+            
+            if (mostActiveUser != null) {
+                int maxCount = interactionCounts.get(mostActiveUser);
+                LocalDateTime latestTimestamp = multiDatasetAnalyzer.getUserMostRecentTimestamp(mostActiveUser);
+                
+                System.out.println("Winner: " + mostActiveUser);
+                System.out.println("Total interactions: " + maxCount);
+                System.out.println("Most recent interaction: " + latestTimestamp.format(FORMATTER));
+                
+                // Show tied users (if any)
+                System.out.println("\nTied users (all have " + maxCount + " interactions):");
+                for (Map.Entry<String, Integer> entry : interactionCounts.entrySet()) {
+                    if (entry.getValue() == maxCount) {
+                        LocalDateTime timestamp = multiDatasetAnalyzer.getUserMostRecentTimestamp(entry.getKey());
+                        String tiebreaker = entry.getKey().equals(mostActiveUser) ? " ← WINNER (tie-breaker)" : "";
+                        System.out.println("  " + entry.getKey() + ": most recent at " + 
+                                         timestamp.format(FORMATTER) + tiebreaker);
+                    }
+                }
+                
+                // Show other users for comparison
+                System.out.println("\nOther users:");
+                for (Map.Entry<String, Integer> entry : interactionCounts.entrySet()) {
+                    if (entry.getValue() < maxCount) {
+                        System.out.println("  " + entry.getKey() + ": " + entry.getValue() + " interactions");
+                    }
+                }
+            } else {
+                System.out.println("No users found in deduplicated dataset.");
+            }
+            System.out.println();
             
             // ==========================================
             // SUMMARY: Project Contributions
