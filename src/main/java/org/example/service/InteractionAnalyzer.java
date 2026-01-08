@@ -61,11 +61,41 @@ public class InteractionAnalyzer {
     
     /**
      * Deduplicates interactions from two datasets using CustomHashSet.
-     * Two interactions are duplicates if all fields match except InteractionID.
      * 
-     * @param dataset1 First list of interactions
-     * @param dataset2 Second list of interactions
-     * @return List of unique interactions with duplicates removed
+     * Deduplication Criteria:
+     * Two interactions are considered duplicates if ALL fields match EXCEPT InteractionID:
+     * 
+     * SessionID must match
+     * UserID must match
+     * Timestamp must match (exact LocalDateTime)
+     * ActionType must match (PLAY, PAUSE, etc.)
+     * ContentID must match
+     * DurationSeconds must match
+     *
+     * 
+     * Why InteractionID is excluded:
+     * Different datasets assign different IDs to the same real-world event. For example:
+     * 
+     * I016 (Dataset_1) = I053 (Dataset_2) - same interaction, different labels
+     * I025 (Dataset_1) = I055 (Dataset_2) - same interaction, different labels
+     * I043 (Dataset_1) = I081 (Dataset_2) - same interaction, different labels
+     * 
+     * 
+     * Implementation:
+     * Uses {@link org.example.structure.CustomHashSet} which leverages 
+     * {@link org.example.model.Interaction#equals(Object)} and 
+     * {@link org.example.model.Interaction#hashCode()} for O(1) duplicate detection.
+     * The Interaction.equals() method explicitly excludes InteractionID from comparison.
+     * 
+     * Expected Results:
+     * Dataset_1 (50 interactions) + Dataset_2 (50 interactions) = 97 unique interactions
+     * (3 duplicates removed: I053, I055, I081)
+     * 
+     * @param dataset1 First list of interactions (e.g., Dataset_1.txt)
+     * @param dataset2 Second list of interactions (e.g., Dataset_2.txt)
+     * @return List of unique interactions with duplicates removed (97 for provided datasets)
+     * @see org.example.model.Interaction#equals(Object)
+     * @see org.example.model.Interaction#hashCode()
      */
     public static List<Interaction> deduplicateDatasets(List<Interaction> dataset1, List<Interaction> dataset2) {
         // Create CustomHashSet with appropriate capacity
@@ -344,6 +374,204 @@ public class InteractionAnalyzer {
     }
     
     /**
+     * Aggregates interaction counts for all users in the dataset.
+     * Returns a map where each key is a userId and the value is the count
+     * of unique interactions for that user (after deduplication).
+     * 
+     * This method is used for identifying the most active users and
+     * handling tie-breaking scenarios in multi-dataset analysis.
+     * 
+     * Example output for deduplicated datasets:
+     * {U001=12, U002=12, U003=12, U004=12, U005=12, U006=10, U007=10, ...}
+     * 
+     * @return Map of userId to interaction count, or empty map if no data
+     */
+    public Map<String, Integer> getUserInteractionCounts() {
+        Map<String, Integer> counts = new HashMap<>();
+        
+        // Iterate through userIndex and extract sizes
+        for (Map.Entry<String, List<Interaction>> entry : userIndex.entrySet()) {
+            String userId = entry.getKey();
+            int count = entry.getValue().size();
+            counts.put(userId, count);
+        }
+        
+        return counts;
+    }
+    
+    /**
+     * Gets the timestamp of the most recent interaction for a specific user.
+     * Used for tie-breaking when multiple users have the same interaction count.
+     * 
+     * The user with the most recent (latest) timestamp is considered more active
+     * in tie-breaking scenarios.
+     * 
+     * Example use case:
+     * - U001 has 12 interactions, most recent at 11:01
+     * - U005 has 12 interactions, most recent at 11:09
+     * - U005 wins the tie-breaker (11:09 > 11:01)
+     * 
+     * @param userId The user ID to check
+     * @return The most recent timestamp for this user, or null if user not found
+     */
+    public LocalDateTime getUserMostRecentTimestamp(String userId) {
+        List<Interaction> userInteractions = getInteractionsByUser(userId);
+        
+        if (userInteractions.isEmpty()) {
+            return null;
+        }
+        
+        LocalDateTime mostRecent = userInteractions.get(0).getTimestamp();
+        
+        for (Interaction interaction : userInteractions) {
+            LocalDateTime timestamp = interaction.getTimestamp();
+            if (timestamp.isAfter(mostRecent)) {
+                mostRecent = timestamp;
+            }
+        }
+        
+        return mostRecent;
+    }
+    
+    /**
+     * Gets the timestamp of the earliest interaction for a specific user.
+     * Used for tie-breaking when multiple users have the same diversity count
+     * (same number of unique action types) in DSA-5: Most Diverse User.
+     * 
+     * Tie-Breaking Strategy:
+     * When multiple users have identical diversity (e.g., all have 5 unique actions),
+     * the user who demonstrated that diverse behavior FIRST (earliest timestamp) wins.
+     * This rewards early adopters and users who showed varied engagement from the start.
+     * 
+     * Rationale for Earliest vs Latest:
+     * - Most interactions (DSA-9): Latest timestamp wins (shows sustained recent activity)
+     * - Most diverse actions (DSA-5): Earliest timestamp wins (shows early diverse behavior)
+     * 
+     * The distinction makes sense because:
+     * - Activity volume benefits from recency (current engagement matters)
+     * - Behavior diversity benefits from earliness (pioneering varied usage patterns)
+     * 
+     * Example Use Case (Dataset_1):
+     * Tied users with 5 unique actions:
+     * - U002: earliest at 08:03 (I002) ← WINS tie-breaker
+     * - U003: earliest at 08:07 (I004)
+     * - U005: earliest at 08:17 (I009)
+     * - U009: earliest at 08:37 (I019)
+     * 
+     * Result: U002 wins because 08:03 < 08:07 < 08:17 < 08:37
+     * 
+     * Implementation:
+     * Iterates through user's interactions to find the minimum (earliest) timestamp
+     * using LocalDateTime.isBefore() comparison. Mirrors getUserMostRecentTimestamp()
+     * but searches for minimum instead of maximum.
+     * 
+     * @param userId The user ID to check (e.g., "U001", "U002")
+     * @return The earliest timestamp for this user, or null if user not found
+     * 
+     * Time Complexity: O(m) where m = number of interactions for this user
+     * Space Complexity: O(1) - only stores single LocalDateTime reference
+     * 
+     * @see #getUserWithMostDiverseActions() - Main method using this tie-breaker
+     * @see #getUserActionTypeCounts() - Aggregation method identifying tied users
+     * @see #getUserMostRecentTimestamp(String) - Opposite tie-breaker (latest wins)
+     */
+    public LocalDateTime getUserEarliestTimestamp(String userId) {
+        List<Interaction> userInteractions = getInteractionsByUser(userId);
+        
+        if (userInteractions.isEmpty()) {
+            return null;
+        }
+        
+        LocalDateTime earliest = userInteractions.get(0).getTimestamp();
+        
+        for (Interaction interaction : userInteractions) {
+            LocalDateTime timestamp = interaction.getTimestamp();
+            if (timestamp.isBefore(earliest)) {
+                earliest = timestamp;
+            }
+        }
+        
+        return earliest;
+    }
+    
+    /**
+     * Finds the user with the most interactions across deduplicated datasets.
+     * Handles ties by selecting the user with the most recent interaction timestamp.
+     * 
+     * Algorithm:
+     * 1. Aggregate interaction counts for all users (via getUserInteractionCounts())
+     * 2. Find the maximum interaction count
+     * 3. Collect all users with that maximum count
+     * 4. If only one user has max count, return that user immediately
+     * 5. If multiple users tied, compare their most recent timestamps
+     * 6. Return the user with the latest (most recent) timestamp
+     * 
+     * Tie-Breaking Example:
+     * After deduplication of Dataset_1 + Dataset_2:
+     * - U001: 12 interactions, most recent at 2025-11-23 11:01
+     * - U002: 12 interactions, most recent at 2025-11-23 11:03
+     * - U003: 12 interactions, most recent at 2025-11-23 11:05
+     * - U004: 12 interactions, most recent at 2025-11-23 11:07
+     * - U005: 12 interactions, most recent at 2025-11-23 11:09 ← WINNER
+     * 
+     * Result: U005 (12 interactions, wins tie-breaker with timestamp 11:09)
+     * 
+     * Complexity:
+     * - Time: O(n + m) where n = number of users, m = interactions for tied users
+     * - Space: O(n) for storing user counts and tied users list
+     * 
+     * @return User ID with most interactions (tie-broken by most recent timestamp), 
+     *         or null if no data
+     */
+    public String getUserWithMostInteractionsAcrossDatasets() {
+        if (userIndex.isEmpty()) {
+            return null;
+        }
+        
+        // Step 1: Get all user interaction counts
+        Map<String, Integer> counts = getUserInteractionCounts();
+        
+        // Step 2: Find the maximum interaction count
+        int maxCount = 0;
+        for (int count : counts.values()) {
+            if (count > maxCount) {
+                maxCount = count;
+            }
+        }
+        
+        // Step 3: Collect all users with the maximum count (potential ties)
+        List<String> tiedUsers = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            if (entry.getValue() == maxCount) {
+                tiedUsers.add(entry.getKey());
+            }
+        }
+        
+        // Step 4: If only one user has max count, return immediately
+        if (tiedUsers.size() == 1) {
+            return tiedUsers.get(0);
+        }
+        
+        // Step 5: Multiple users tied - apply timestamp tie-breaker
+        String winnerUser = tiedUsers.get(0);
+        LocalDateTime winnerTimestamp = getUserMostRecentTimestamp(winnerUser);
+        
+        for (int i = 1; i < tiedUsers.size(); i++) {
+            String currentUser = tiedUsers.get(i);
+            LocalDateTime currentTimestamp = getUserMostRecentTimestamp(currentUser);
+            
+            // User with more recent timestamp wins
+            if (currentTimestamp != null && 
+                (winnerTimestamp == null || currentTimestamp.isAfter(winnerTimestamp))) {
+                winnerUser = currentUser;
+                winnerTimestamp = currentTimestamp;
+            }
+        }
+        
+        return winnerUser;
+    }
+    
+    /**
      * Finds the user with the most interactions in the dataset.
      * 
      * @return User ID of the most active user, or null if no data
@@ -370,11 +598,52 @@ public class InteractionAnalyzer {
     
     /**
      * Counts how many unique action types a specific user has performed.
-     * For example, if a user has done "play", "pause", and "skip" actions,
-     * this returns 3 (even if they did "play" multiple times).
+     * This method is the foundation for identifying the "most diverse" user
+     * (DSA-5: User with Most Different Actions).
      * 
-     * @param userId The user ID to analyze
-     * @return Number of unique action types, or 0 if user not found
+     * Action Type Criteria:
+     * The streaming platform recognizes 5 distinct action types:
+     * 1. PLAY - Start or resume playing content
+     * 2. PAUSE - Temporarily pause content playback
+     * 3. STOP - Completely stop content (ends session)
+     * 4. LIKE - Mark content as favorite/liked
+     * 5. SKIP - Skip to next content (duration = 0)
+     * 
+     * Diversity Definition:
+     * Diversity = number of UNIQUE action types performed, not total actions.
+     * A user who performs PLAY 10 times has diversity = 1.
+     * A user who performs PLAY, PAUSE, LIKE has diversity = 3.
+     * 
+     * Implementation Strategy:
+     * Uses HashSet to automatically deduplicate action type strings.
+     * For each user interaction, adds actionType to set. Final set.size()
+     * equals diversity count. This provides O(n) time complexity where
+     * n = number of interactions for that user.
+     * 
+     * Example Analysis (Dataset_1):
+     * - U001: {PLAY, PAUSE, STOP, LIKE} = 4 unique actions
+     * - U002: {PLAY, SKIP, PAUSE, LIKE, STOP} = 5 unique actions ← Tied winner
+     * - U003: {PLAY, LIKE, STOP, SKIP} = 4 unique actions  
+     * - U005: {PLAY, STOP, LIKE, PAUSE} = 4 unique actions
+     * - U009: {PLAY, PAUSE, SKIP, STOP} = 4 unique actions
+     * 
+     * Expected Result (Dataset_1):
+     * Multiple users tied with 5 actions (U002, U003, U005, U009).
+     * Tie-breaker: User with earliest interaction wins → U002 at 08:03
+     * 
+     * Single Dataset Scope:
+     * Per project requirements: "All operations should be carried out only 
+     * on the data in the original log file" (Dataset_1.txt for Operation 1.3).
+     * This method operates on a single InteractionAnalyzer instance.
+     * 
+     * @param userId The user ID to analyze (e.g., "U001", "U002")
+     * @return Number of unique action types (0-5), or 0 if user not found
+     * 
+     * Time Complexity: O(n) where n = user's interaction count
+     * Space Complexity: O(k) where k = number of unique actions (max 5)
+     * 
+     * @see #getUserWithMostDiverseActions() - Main method using this helper
+     * @see #getUserEarliestTimestamp(String) - Tie-breaker for diversity ties
      */
     public int countUniqueActions(String userId) {
         List<Interaction> userInteractions = getInteractionsByUser(userId);
@@ -390,6 +659,163 @@ public class InteractionAnalyzer {
         }
         
         return uniqueActions.size();
+    }
+    
+    /**
+     * Aggregates diversity counts (unique action types) for all users in the dataset.
+     * Returns a map where each key is a userId and the value is the count of 
+     * unique action types that user has performed.
+     * 
+     * This method is the aggregation step for identifying the "most diverse" user
+     * in DSA-5 (User with Most Different Actions). It provides a complete overview
+     * of action diversity across all users, enabling quick identification of users
+     * with the highest variety of interactions.
+     * 
+     * Implementation Strategy:
+     * Iterates through the userIndex HashMap and calls countUniqueActions() for
+     * each user. This leverages the existing helper method to avoid code duplication
+     * and maintain consistency in diversity calculation logic.
+     * 
+     * Example Output (Dataset_1):
+     * {
+     *   U001=4, U002=5, U003=4, U004=3, U005=4, U006=2, U007=2,
+     *   U008=2, U009=4, U010=3, U011=2, U012=2
+     * }
+     * 
+     * In this example:
+     * - U002 has highest diversity (5 unique actions: PLAY, SKIP, PAUSE, LIKE, STOP)
+     * - U001, U003, U005, U009 all have 4 unique actions (tied for second)
+     * - U004, U010 have 3 unique actions
+     * - U006-U008, U011-U012 have 2 unique actions (least diverse)
+     * 
+     * Use Cases:
+     * - Finding user with most diverse behavior (primary use for DSA-5)
+     * - Identifying tie scenarios for diversity-based queries
+     * - Analyzing user engagement patterns (diversity correlates with engagement)
+     * - Generating user behavior reports and statistics
+     * 
+     * Tie-Breaking Context:
+     * When multiple users share the maximum diversity count, getUserEarliestTimestamp()
+     * is used to break ties. The user with the earliest interaction wins, as they
+     * demonstrated diverse behavior first.
+     * 
+     * Single Dataset Scope:
+     * Per project requirements: "All operations should be carried out only on the 
+     * data in the original log file." This method operates on a single analyzer 
+     * instance (typically Dataset_1.txt for Operation 1.3).
+     * 
+     * @return Map of userId to diversity count (unique action types), 
+     *         or empty map if no users exist
+     * 
+     * Time Complexity: O(n × m) where n = number of users, m = avg interactions per user
+     *                  For 12 users with ~4-7 interactions each: ~60 operations
+     * Space Complexity: O(n) for storing diversity counts map (12 entries for our dataset)
+     * 
+     * @see #countUniqueActions(String) - Helper method calculating per-user diversity
+     * @see #getUserWithMostDiverseActions() - Main method using this aggregation
+     * @see #getUserEarliestTimestamp(String) - Tie-breaker for diversity ties
+     */
+    public Map<String, Integer> getUserActionTypeCounts() {
+        Map<String, Integer> diversityCounts = new HashMap<>();
+        
+        // Iterate through all users and calculate their diversity
+        for (String userId : userIndex.keySet()) {
+            int diversityCount = countUniqueActions(userId);
+            diversityCounts.put(userId, diversityCount);
+        }
+        
+        return diversityCounts;
+    }
+    
+    /**
+     * Finds the user with the most diverse actions (highest number of unique action types).
+     * Handles ties by selecting the user with the earliest interaction timestamp.
+     * 
+     * This is the main method for DSA-5: User with Most Different Actions (Operation 1.3).
+     * It identifies which user has performed the greatest variety of interaction types,
+     * demonstrating the most versatile engagement with the streaming platform.
+     * 
+     * Algorithm (6-Step Process):
+     * 1. Aggregate diversity counts for all users via getUserActionTypeCounts()
+     * 2. Find the maximum diversity count across all users
+     * 3. Collect all users who have that maximum diversity count (handle ties)
+     * 4. If only one user has max diversity, return immediately (no tie-breaking needed)
+     * 5. If multiple users tied, compare their earliest timestamps
+     * 6. Return the user with the earliest interaction (pioneered diverse behavior first)
+     * 
+     * Tie-Breaking Example (Dataset_1):
+     * After analyzing Dataset_1.txt:
+     * - U002: 5 unique actions (PLAY, SKIP, PAUSE, LIKE, STOP), earliest at 08:03 ← WINNER
+     * - U003: 5 unique actions (PLAY, LIKE, STOP, SKIP, PAUSE), earliest at 08:07
+     * - U005: 5 unique actions (PLAY, STOP, LIKE, PAUSE), earliest at 08:17
+     * - U009: 5 unique actions (PLAY, PAUSE, SKIP, STOP), earliest at 08:37
+     * 
+     * Result: U002 wins (5 unique actions, earliest timestamp 08:03)
+     * 
+     * Expected Results by Dataset:
+     * - Dataset_1 (Operation 1.3): U002 (5 actions, 08:03)
+     * - Combined datasets would need multi-dataset analysis (not in scope per brief)
+     * 
+     * Complexity Analysis:
+     * - Step 1 (Aggregation): O(n × m) where n = users, m = avg interactions per user
+     * - Step 2 (Find max): O(n) iterate through diversity counts
+     * - Step 3 (Collect ties): O(n) iterate through counts again
+     * - Step 4 (Early return): O(1) if no tie
+     * - Step 5 (Timestamps): O(k × m) where k = tied users, m = avg interactions
+     * - Total: O(n × m + k × m) ≈ O(n × m) since k ≤ n
+     * - For Dataset_1: 12 users × ~4-7 interactions = ~60 operations
+     * 
+     * @return User ID with most unique action types (tie-broken by earliest timestamp),
+     *         or null if no users exist in dataset
+     * 
+     */
+    public String getUserWithMostDiverseActions() {
+        if (userIndex.isEmpty()) {
+            return null;
+        }
+        
+        // Step 1: Get diversity counts for all users
+        Map<String, Integer> diversityCounts = getUserActionTypeCounts();
+        
+        // Step 2: Find the maximum diversity count
+        int maxDiversity = 0;
+        for (int diversityCount : diversityCounts.values()) {
+            if (diversityCount > maxDiversity) {
+                maxDiversity = diversityCount;
+            }
+        }
+        
+        // Step 3: Collect all users with the maximum diversity (potential ties)
+        List<String> tiedUsers = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : diversityCounts.entrySet()) {
+            if (entry.getValue() == maxDiversity) {
+                tiedUsers.add(entry.getKey());
+            }
+        }
+        
+        // Step 4: If only one user has max diversity, return immediately
+        if (tiedUsers.size() == 1) {
+            return tiedUsers.get(0);
+        }
+        
+        // Step 5: Multiple users tied - apply earliest timestamp tie-breaker
+        String winnerUser = tiedUsers.get(0);
+        LocalDateTime winnerTimestamp = getUserEarliestTimestamp(winnerUser);
+        
+        for (int i = 1; i < tiedUsers.size(); i++) {
+            String currentUser = tiedUsers.get(i);
+            LocalDateTime currentTimestamp = getUserEarliestTimestamp(currentUser);
+            
+            // User with earlier timestamp wins (pioneered diverse behavior first)
+            if (currentTimestamp != null && 
+                (winnerTimestamp == null || currentTimestamp.isBefore(winnerTimestamp))) {
+                winnerUser = currentUser;
+                winnerTimestamp = currentTimestamp;
+            }
+        }
+        
+        // Step 6: Return the winner
+        return winnerUser;
     }
     
     /**

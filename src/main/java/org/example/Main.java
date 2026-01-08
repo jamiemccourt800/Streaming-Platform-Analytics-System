@@ -95,8 +95,40 @@ public class Main {
             System.out.println("----------------------------------------");
             System.out.println("1.3: User with Most Different Actions");
             System.out.println("----------------------------------------");
-            System.out.println("NOTE: Jamie will do this part");
-            System.out.println("Should show: U002\n");
+            
+            String mostDiverseUser = analyzer1.getUserWithMostDiverseActions();
+            Map<String, Integer> diversityCounts = analyzer1.getUserActionTypeCounts();
+            
+            if (mostDiverseUser != null) {
+                int maxDiversity = diversityCounts.get(mostDiverseUser);
+                LocalDateTime earliestTimestamp = analyzer1.getUserEarliestTimestamp(mostDiverseUser);
+                
+                System.out.println("Winner: " + mostDiverseUser);
+                System.out.println("Unique action types: " + maxDiversity);
+                System.out.println("Earliest interaction: " + earliestTimestamp.format(FORMATTER));
+                
+                // Show tied users (if any)
+                System.out.println("\nTied users (all have " + maxDiversity + " unique actions):");
+                for (Map.Entry<String, Integer> entry : diversityCounts.entrySet()) {
+                    if (entry.getValue() == maxDiversity) {
+                        LocalDateTime timestamp = analyzer1.getUserEarliestTimestamp(entry.getKey());
+                        String tiebreaker = entry.getKey().equals(mostDiverseUser) ? " ← WINNER (tie-breaker)" : "";
+                        System.out.println("  " + entry.getKey() + ": earliest at " + 
+                                         timestamp.format(FORMATTER) + tiebreaker);
+                    }
+                }
+                
+                // Show other users for comparison
+                System.out.println("\nOther users:");
+                for (Map.Entry<String, Integer> entry : diversityCounts.entrySet()) {
+                    if (entry.getValue() < maxDiversity) {
+                        System.out.println("  " + entry.getKey() + ": " + entry.getValue() + " unique actions");
+                    }
+                }
+            } else {
+                System.out.println("No users found in dataset.");
+            }
+            System.out.println();
             
             // Operation 1.4: Filter by user
             System.out.println("----------------------------------------");

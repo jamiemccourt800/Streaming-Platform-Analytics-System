@@ -78,6 +78,25 @@ The system provides timestamp-based sorting to display interactions from newest 
 - **Method**: `InteractionAnalyzer.getInteractionsReverseChronological()` converts unordered CustomHashSet to sorted List
 - **Performance**: O(n log n) sorting with Collections.sort(), efficient for expected dataset sizes
 
+### User with Most Interactions (Multi-Dataset)
+The system identifies the most active user across deduplicated datasets with intelligent tie-breaking:
+- **Main Method**: `getUserWithMostInteractionsAcrossDatasets()` - finds user with highest interaction count
+- **Aggregation**: `getUserInteractionCounts()` - returns Map of all userId → count pairs
+- **Tie-Breaker**: `getUserMostRecentTimestamp(userId)` - finds user's latest interaction timestamp
+- **Tie-Breaking Strategy**: When multiple users have equal counts, user with most recent timestamp wins
+- **Expected Result**: U005 (12 interactions, timestamp 11:09) defeats U001-U004 (also 12, but earlier timestamps)
+- **Performance**: O(n + m) where n = users, m = interactions for tied users
+
+### User with Most Diverse Actions (Single Dataset)
+The system identifies the user with the most unique action types in Dataset_1 only, with tie-breaking by earliest interaction:
+- **Main Method**: `getUserWithMostDiverseActions()` - finds user with most unique action types
+- **Aggregation**: `getUserActionTypeCounts()` - returns Map of all userId → diversity count pairs
+- **Tie-Breaker**: `getUserEarliestTimestamp(userId)` - finds user's earliest interaction timestamp
+- **Diversity Criteria**: Counts unique action types (PLAY, PAUSE, STOP, LIKE, SKIP), not total actions
+- **Tie-Breaking Strategy**: When multiple users have equal diversity counts, user with earliest timestamp wins (rewards pioneers)
+- **Expected Result**: U002 (5 unique actions, earliest at 08:03) defeats U003/U005/U009 (also 5, but later timestamps)
+- **Performance**: O(n × m) where n = users, m = average interactions per user
+
 ```
 
 ## Expected Analytics Results
