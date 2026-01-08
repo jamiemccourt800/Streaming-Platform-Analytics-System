@@ -5,8 +5,11 @@ import org.example.util.DataLoader;
 import java.util.List;
 
 /**
- * Test for DSA-7: Longest Viewing Span
- * Tests getUserWithLongestViewingSpan() method
+ * Test for DSA-7: Longest Viewing Span.
+ * Finds which user has the longest time between their first and last interaction.
+ * Expected winner: U002 with 180 minutes.
+ * 
+ * @author Shauna Mc Guinness
  */
 public class LongestSpanTest {
     

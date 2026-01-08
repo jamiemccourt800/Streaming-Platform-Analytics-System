@@ -1,7 +1,10 @@
 import org.example.datastructures.CustomTreeMap;
 
 /**
- * Quick test class for CustomTreeMap to verify it works correctly.
+ * Test for CustomTreeMap.
+ * Tests basic operations like put, get, remove, and range queries.
+ * 
+ * @author Shauna Mc Guinness
  */
 public class CustomTreeMapTest {
     

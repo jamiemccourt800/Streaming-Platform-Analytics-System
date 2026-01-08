@@ -4,23 +4,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * My own TreeMap using a tree.
- * Keys are stored in order so I can search for ranges quickly.
+ * Custom TreeMap using a Binary Search Tree.
+ * Keeps keys in sorted order which helps with range queries.
+ * Useful for finding timestamps between two dates.
  * 
- * @param <K> The key type (needs to be comparable)
+ * Time Complexity:
+ * - put, get, remove: O(log n) average case
+ * - range queries: O(log n + k) where k = number of results
+ * 
+ * @param <K> The key type (must be Comparable)
  * @param <V> The value type
  * 
- * @author Shauna
+ * @author Shauna Mc Guinness
  */
 public class CustomTreeMap<K extends Comparable<? super K>, V> {
     
-    // A node in the tree
+    /**
+     * Node class for the BST.
+     * Each node has a key, value, and left/right children.
+     */
     private class Node {
         K key;
         V value;
-        Node left;
-        Node right;
+        Node left;       // smaller keys go left
+        Node right;      // larger keys go right
         
+        /**
+         * Creates a new node with the given key and value.
+         * 
+         * @param key The key for this node
+         * @param value The value to store
+         */
         Node(K key, V value) {
             this.key = key;
             this.value = value;

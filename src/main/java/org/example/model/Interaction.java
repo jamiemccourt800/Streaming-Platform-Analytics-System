@@ -6,11 +6,11 @@ import java.util.Comparator;
 import java.util.Objects;
 
 /**
- * Represents a single user interaction with streaming content.
- * Each interaction captures what a user did (PLAY, PAUSE, LIKE, etc.) 
- * at a specific time with specific content.
+ * Represents one user interaction.
+ * This is like one row from the CSV file.
+ * Each interaction has info about what the user did (PLAY, PAUSE, LIKE, etc.).
  * 
- * This is like a single row from your CSV file turned into a Java object.
+ * @author Shauna Mc Guinness
  */
 public class Interaction {
     
