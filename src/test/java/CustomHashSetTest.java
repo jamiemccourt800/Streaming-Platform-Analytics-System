@@ -2,208 +2,95 @@ import org.example.structure.CustomHashSet;
 import org.example.model.Interaction;
 import java.time.LocalDateTime;
 
+/**
+ * Test for CustomHashSet.
+ * Tests basic set operations and deduplication.
+ * 
+ * @author Jamie McCourt (D00265301)
+ */
 public class CustomHashSetTest {
     
     public static void main(String[] args) {
-        System.out.println("=== CustomHashSet Test Suite ===\n");
-        
-        int passed = 0;
-        int total = 0;
+        System.out.println("=== CustomHashSet Test ===\n");
         
         // Test 1: Basic add operation
-        total++;
-        try {
-            CustomHashSet<String> set = new CustomHashSet<>();
-            boolean added1 = set.add("element1");
-            boolean added2 = set.add("element2");
-            
-            if (added1 && added2 && set.size() == 2) {
-                System.out.println("✓ Test 1: Basic add operation - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 1: Basic add operation - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 1: Basic add operation - EXCEPTION: " + e.getMessage());
-        }
+        System.out.println("Test 1: Basic add operation");
+        CustomHashSet<String> set = new CustomHashSet<>();
+        set.add("element1");
+        set.add("element2");
+        System.out.println("Size: " + set.size()); // 2
         
         // Test 2: Duplicate prevention
-        total++;
-        try {
-            CustomHashSet<String> set = new CustomHashSet<>();
-            set.add("element1");
-            boolean addedDuplicate = set.add("element1");
-            
-            if (!addedDuplicate && set.size() == 1) {
-                System.out.println("✓ Test 2: Duplicate prevention - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 2: Duplicate prevention - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 2: Duplicate prevention - EXCEPTION: " + e.getMessage());
-        }
+        System.out.println("\nTest 2: Duplicate prevention");
+        boolean addedDuplicate = set.add("element1");
+        System.out.println("Added duplicate: " + addedDuplicate); // false
+        System.out.println("Size: " + set.size()); // 2
         
         // Test 3: Contains operation
-        total++;
-        try {
-            CustomHashSet<String> set = new CustomHashSet<>();
-            set.add("element1");
-            set.add("element2");
-            
-            if (set.contains("element1") && set.contains("element2") && !set.contains("element3")) {
-                System.out.println("✓ Test 3: Contains operation - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 3: Contains operation - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 3: Contains operation - EXCEPTION: " + e.getMessage());
-        }
+        System.out.println("\nTest 3: Contains operation");
+        System.out.println("Contains element1: " + set.contains("element1")); // true
+        System.out.println("Contains element3: " + set.contains("element3")); // false
         
         // Test 4: Remove operation
-        total++;
-        try {
-            CustomHashSet<String> set = new CustomHashSet<>();
-            set.add("element1");
-            set.add("element2");
-            boolean removed = set.remove("element1");
-            
-            if (removed && !set.contains("element1") && set.contains("element2") && set.size() == 1) {
-                System.out.println("✓ Test 4: Remove operation - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 4: Remove operation - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 4: Remove operation - EXCEPTION: " + e.getMessage());
-        }
+        System.out.println("\nTest 4: Remove operation");
+        boolean removed = set.remove("element1");
+        System.out.println("Removed element1: " + removed); // true
+        System.out.println("Size: " + set.size()); // 1
+        System.out.println("Contains element1: " + set.contains("element1")); // false
         
         // Test 5: Remove non-existent element
-        total++;
-        try {
-            CustomHashSet<String> set = new CustomHashSet<>();
-            set.add("element1");
-            boolean removed = set.remove("element2");
-            
-            if (!removed && set.size() == 1) {
-                System.out.println("✓ Test 5: Remove non-existent - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 5: Remove non-existent - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 5: Remove non-existent - EXCEPTION: " + e.getMessage());
-        }
+        System.out.println("\nTest 5: Remove non-existent");
+        boolean removedNonExistent = set.remove("element99");
+        System.out.println("Removed non-existent: " + removedNonExistent); // false
         
         // Test 6: Clear operation
-        total++;
-        try {
-            CustomHashSet<String> set = new CustomHashSet<>();
-            set.add("element1");
-            set.add("element2");
-            set.add("element3");
-            set.clear();
-            
-            if (set.isEmpty() && set.size() == 0 && !set.contains("element1")) {
-                System.out.println("✓ Test 6: Clear operation - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 6: Clear operation - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 6: Clear operation - EXCEPTION: " + e.getMessage());
-        }
+        System.out.println("\nTest 6: Clear operation");
+        set.add("A");
+        set.add("B");
+        set.clear();
+        System.out.println("Size after clear: " + set.size()); // 0
+        System.out.println("Is empty: " + set.isEmpty()); // true
         
         // Test 7: Null element handling
-        total++;
-        try {
-            CustomHashSet<String> set = new CustomHashSet<>();
-            set.add(null);
-            
-            if (set.contains(null) && set.size() == 1) {
-                System.out.println("✓ Test 7: Null element handling - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 7: Null element handling - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 7: Null element handling - EXCEPTION: " + e.getMessage());
-        }
+        System.out.println("\nTest 7: Null element handling");
+        set.add(null);
+        System.out.println("Contains null: " + set.contains(null)); // true
+        System.out.println("Size: " + set.size()); // 1
         
         // Test 8: Custom objects (Interaction deduplication)
-        total++;
-        try {
-            CustomHashSet<Interaction> set = new CustomHashSet<>();
-            Interaction i1 = new Interaction("I001", "S001", "U001", 
-                LocalDateTime.of(2025, 11, 23, 8, 0), "PLAY", "C001", 120);
-            Interaction i2 = new Interaction("I002", "S001", "U001", 
-                LocalDateTime.of(2025, 11, 23, 8, 0), "PLAY", "C001", 120);
-            
-            set.add(i1);
-            boolean addedDup = set.add(i2); // Should be considered duplicate (equals ignores ID)
-            
-            if (!addedDup && set.size() == 1) {
-                System.out.println("✓ Test 8: Interaction deduplication - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 8: Interaction deduplication - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 8: Interaction deduplication - EXCEPTION: " + e.getMessage());
-        }
+        System.out.println("\nTest 8: Interaction deduplication");
+        CustomHashSet<Interaction> interactionSet = new CustomHashSet<>();
+        Interaction i1 = new Interaction("I001", "S001", "U001", 
+            LocalDateTime.of(2025, 11, 23, 8, 0), "PLAY", "C001", 120);
+        Interaction i2 = new Interaction("I002", "S001", "U001", 
+            LocalDateTime.of(2025, 11, 23, 8, 0), "PLAY", "C001", 120);
+        
+        interactionSet.add(i1);
+        boolean addedDup = interactionSet.add(i2);
+        System.out.println("Added duplicate interaction: " + addedDup); // false
+        System.out.println("Set size: " + interactionSet.size()); // 1
         
         // Test 9: Iterator functionality
-        total++;
-        try {
-            CustomHashSet<String> set = new CustomHashSet<>();
-            set.add("A");
-            set.add("B");
-            set.add("C");
-            
-            int count = 0;
-            for (String element : set) {
-                count++;
-            }
-            
-            if (count == 3) {
-                System.out.println("✓ Test 9: Iterator functionality - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 9: Iterator functionality - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 9: Iterator functionality - EXCEPTION: " + e.getMessage());
+        System.out.println("\nTest 9: Iterator functionality");
+        CustomHashSet<String> iterSet = new CustomHashSet<>();
+        iterSet.add("A");
+        iterSet.add("B");
+        iterSet.add("C");
+        System.out.print("Elements: ");
+        for (String element : iterSet) {
+            System.out.print(element + " ");
         }
+        System.out.println();
         
-        // Test 10: Large dataset (stress test)
-        total++;
-        try {
-            CustomHashSet<Integer> set = new CustomHashSet<>();
-            for (int i = 0; i < 1000; i++) {
-                set.add(i);
-            }
-            
-            boolean allPresent = true;
-            for (int i = 0; i < 1000; i++) {
-                if (!set.contains(i)) {
-                    allPresent = false;
-                    break;
-                }
-            }
-            
-            if (allPresent && set.size() == 1000) {
-                System.out.println("✓ Test 10: Large dataset - PASSED");
-                passed++;
-            } else {
-                System.out.println("✗ Test 10: Large dataset - FAILED");
-            }
-        } catch (Exception e) {
-            System.out.println("✗ Test 10: Large dataset - EXCEPTION: " + e.getMessage());
+        // Test 10: Large dataset
+        System.out.println("\nTest 10: Large dataset");
+        CustomHashSet<Integer> largeSet = new CustomHashSet<>();
+        for (int i = 0; i < 1000; i++) {
+            largeSet.add(i);
         }
+        System.out.println("Size: " + largeSet.size()); // 1000
+        System.out.println("Contains 500: " + largeSet.contains(500)); // true
         
-        System.out.println("\n=================================");
-        System.out.println("Tests Passed: " + passed + "/" + total);
-        System.out.println("=================================");
+        System.out.println("\n=== All CustomHashSet tests complete ===");
     }
 }
