@@ -5,7 +5,7 @@
 
 ## Overview
 
-A Java-based analytics system that processes user interaction data from a streaming platform (like Netflix or Spotify). The system demonstrates efficient use of **custom-implemented** data structures (CustomHashMap, CustomHashSet, CustomTreeMap) to analyze user behavior, detect duplicates, and perform time-based queries across 100+ interaction records.
+A Java-based analytics system that processes user interaction data from a streaming platform (like Netflix or Spotify). The system demonstrates efficient use of **custom-implemented** data structures (CustomHashMap, CustomHashSet, CustomTreeMap) to analyze user behavior, detect duplicates, and perform time-based queries. Designed for datasets up to 5,000 records; currently processes 100 records (97 unique after deduplication).
 
 ## Features
 
@@ -101,7 +101,8 @@ java -cp target/classes DeduplicationTest
 
 ## Dataset Information
 
-- **Total Records**: 100 (50 per dataset)
+- **Current Dataset Size**: 100 records (50 per dataset)
+- **Design Capacity**: Optimized for datasets <5,000 records per spec requirements
 - **Unique Records**: 97 (after duplicate removal)
 - **Users**: U001 - U012
 - **Action Types**: PLAY, PAUSE, STOP, LIKE, SKIP
