@@ -573,6 +573,8 @@ public class InteractionAnalyzer {
     
     /**
      * Finds the user with the most interactions in the dataset.
+     * If multiple users have the same count, returns the user with the
+     * most recent interaction (tie-breaker for DSA-9).
      * 
      * @return User ID of the most active user, or null if no data
      */
@@ -583,13 +585,25 @@ public class InteractionAnalyzer {
         
         String mostActiveUser = null;
         int maxInteractions = 0;
+        LocalDateTime mostRecentTime = null;
         
         // Iterate through all users and find the one with most interactions
         for (Map.Entry<String, List<Interaction>> entry : userIndex.entrySet()) {
+            String userId = entry.getKey();
             int count = entry.getValue().size();
+            
             if (count > maxInteractions) {
+                // This user has more interactions
                 maxInteractions = count;
-                mostActiveUser = entry.getKey();
+                mostActiveUser = userId;
+                mostRecentTime = getUserMostRecentTimestamp(userId);
+            } else if (count == maxInteractions && mostActiveUser != null) {
+                // Tie! Use most recent timestamp as tie-breaker
+                LocalDateTime currentUserTime = getUserMostRecentTimestamp(userId);
+                if (currentUserTime != null && (mostRecentTime == null || currentUserTime.isAfter(mostRecentTime))) {
+                    mostActiveUser = userId;
+                    mostRecentTime = currentUserTime;
+                }
             }
         }
         

@@ -186,31 +186,25 @@ public class Main {
             // OPERATION 1.7: Longest Viewing Span (MY IMPLEMENTATION)
             // ==========================================
             System.out.println("----------------------------------------");
-            System.out.println("1.7: Longest Viewing Span");
+            System.out.println("1.7: Longest Viewing Span (Dataset 1 Only)");
             System.out.println("----------------------------------------");
             
-            // Combine both datasets for complete user history
-            List<Interaction> allData = new java.util.ArrayList<>();
-            allData.addAll(dataset1);
-            allData.addAll(dataset2);
-            InteractionAnalyzer allAnalyzer = new InteractionAnalyzer(allData);
-            
-            // Calculate longest span (time between first and last interaction)
-            String longestUser = allAnalyzer.getUserWithLongestViewingSpan();
-            long minutes = allAnalyzer.getUserViewingSpan(longestUser);
+            // Part 1: Use only Dataset 1 (original log file)
+            String longestUser = analyzer1.getUserWithLongestViewingSpan();
+            long minutes = analyzer1.getUserViewingSpan(longestUser);
             
             System.out.println("Winner: " + longestUser);
             System.out.println("Span: " + minutes + " minutes");
-            System.out.println("(Time between first and last interaction)");
+            System.out.println("(Time between first and last interaction in Dataset 1)");
             
-            // Display all user spans for comparison
-            System.out.println("\nAll users sorted:");
-            java.util.Set<String> users = allAnalyzer.getAllUsers();
+            // Display all user spans for comparison  
+            System.out.println("\nAll users in Dataset 1:");
+            java.util.Set<String> users = analyzer1.getAllUsers();
             java.util.List<String> sortedUsers = new java.util.ArrayList<>(users);
             java.util.Collections.sort(sortedUsers);
             
             for (String user : sortedUsers) {
-                long span = allAnalyzer.getUserViewingSpan(user);
+                long span = analyzer1.getUserViewingSpan(user);
                 System.out.println(user + ": " + span + " minutes");
             }
             System.out.println();
@@ -224,7 +218,7 @@ public class Main {
             // OPERATION 2.2: Remove Duplicates
             // ==========================================
             System.out.println("----------------------------------------");
-            System.out.println("2.2: Remove Duplicates");
+            System.out.println("2.2: Deduplicate Datasets");
             System.out.println("----------------------------------------");
             
             // Deduplicate datasets - remove interactions from dataset2 that appear in dataset1
@@ -241,7 +235,7 @@ public class Main {
             // OPERATION 2.3: User with Most Interactions (Multi-Dataset)
             // ==========================================
             System.out.println("----------------------------------------");
-            System.out.println("2.3: User with Most Interactions");
+            System.out.println("2.3: User with Most Interactions (After Deduplication)");
             System.out.println("----------------------------------------");
             
             // Create analyzer with deduplicated data
