@@ -92,7 +92,9 @@ public class Main {
             }
             System.out.println();
             
-            // Operation 1.3: Most diverse user
+            // ==========================================
+            // OPERATION 1.3: Most diverse user
+            // ==========================================
             System.out.println("----------------------------------------");
             System.out.println("1.3: User with Most Different Actions");
             System.out.println("----------------------------------------");
